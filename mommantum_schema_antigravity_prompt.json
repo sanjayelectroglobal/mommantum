@@ -1,0 +1,1015 @@
+{
+  "prompt_name": "Mommantum centralized dynamic schema system - single autonomous run",
+  "version": "2.0",
+  "execution_mode": "AUTONOMOUS. Do the whole task in one run, in the order of 'phases'. Do not stop for approval. Only stop and ask if a rule under 'hard_rules' would be broken. At the end print the final report (see 'final_report').",
+  "role": "Senior Next.js 15 / TypeScript / Supabase / SEO / Schema.org engineer working on the repo mommantum-main (Next.js 15.3.9, React 19, App Router, Supabase, Tailwind, leftover Medusa starter).",
+  "hard_rules": [
+    "LOCAL ONLY. Never deploy, push, or touch the live site.",
+    "Before ANY database write, read NEXT_PUBLIC_SUPABASE_URL. If it is the production project, do NOT write: generate SQL files under /db-proposals/ and do not execute them. Read-only queries are allowed.",
+    "Do NOT create a Schema Panel or any schema dashboard. REMOVE the existing /admin/schema panel (manager's instruction).",
+    "Do NOT hardcode per-page schema or per-URL schema config. One shared template per content type. Code may hold type names, template structure and global brand constants. Titles, descriptions, URLs, images, authors, dates, FAQs, prices, service details must come from content data.",
+    "Never fabricate authors, dates, images, ratings, reviews, prices, addresses or FAQs. Missing optional field = omit the property (print a dev-only warning, never in HTML).",
+    "NO aggregateRating / review (no real review with name+rating+date exists).",
+    "Fresh implementation. Read old code only to learn data sources/dependencies. Do not copy manual-seo-schema.",
+    "The file .agents/AGENTS.md says 'do not modify correct schemas'. The user explicitly overrides this for this task because current schema is not correct. Do not edit .agents files.",
+    "Do not drop DB tables/columns. Keep seo_setting.schema_json column; just stop reading it. Propose migrations as SQL files only.",
+    "Keep: /admin/seo editor, blog/service/case-study editors, roles/auth, sitemap, robots, internal-linking, all unrelated admin features.",
+    "Never state a test passed unless you ran it and can show real output.",
+    "next.config.js ignores TS/ESLint errors on build: you MUST run 'npx tsc --noEmit' yourself."
+  ],
+  "verified_audit_of_current_code": {
+    "stack": "No separate backend. Backend = Next.js route handlers in src/app/api/** + Supabase (anon client for public reads, supabaseAdmin for admin APIs). mommantum_supabase.json is an n8n workflow, NOT a DB schema: discover tables by reading code / read-only introspection.",
+    "seo_data_layer": "src/lib/data/seo.ts: getSeoSetting(pageKey) cached 300s tag 'seo_setting'; getSiteSetting() cached 3600s tag 'site_setting'; buildSeoMetadata(). seo_setting columns: page_key, meta_title, meta_description, slug, canonical_url, robots_*, primary_keyword, secondary_keywords[], meta_keywords, og_*, twitter_*, schema_json, faq_section. site_setting: site_name, site_url, logo_url, favicon_url, brand_name, custom_admin_path.",
+    "page_key_patterns": [
+      "home|homepage",
+      "about",
+      "contact",
+      "services",
+      "service:{slug}",
+      "work",
+      "work:{slug}",
+      "blog",
+      "blog slug keys"
+    ],
+    "routes": {
+      "/": "(store)/(main)/page.tsx",
+      "/about": "(store)/about/page.tsx (AboutClient hardcoded)",
+      "/contact": "(store)/contact/page.tsx",
+      "/services": "(store)/services/page.tsx",
+      "/services/[slug]": "(store)/services/[slug]/page.tsx (services table + FaqAccordion renders service.faqs)",
+      "/work": "(store)/work/page.tsx",
+      "/work/[slug]": "(store)/work/[slug]/page.tsx",
+      "/blog": "(store)/blog/page.tsx",
+      "/blog/[slug]": "(store)/blog/[slug]/page.tsx (BlogFaqAccordion renders post.faqs)",
+      "/blog-ai": "inspect",
+      "/editz": "hardcoded landing page, data in src/modules/editz/lib/data.ts (has its own FAQS)",
+      "/privacy-policy": "static",
+      "/terms-and-conditions": "static",
+      "no refund page exists": true,
+      "medusa leftovers": "/store, /products/[handle], /categories/*, /collections/*, /cart, /checkout, /account, /order/*"
+    },
+    "problems_found": [
+      "Duplicate output: almost every page renders BOTH <SeoJsonLd> and <ManualSeoSchema>.",
+      "ai-seo-service.ts (~L397) stores a FAQ ARRAY into seo_setting.schema_json; SeoJsonLd prints it raw = invalid JSON-LD (no @context/@type). Verify by rendering.",
+      "schema_json is overloaded and editable per page in the Schema Panel = forbidden per-URL manual schema.",
+      "Fabricated fallbacks in manual-seo-schema: datePublished 2026-05-09, dateModified 2026-07-12, phone +91-9588973492, email kuldeep@mommantum.com, legalName 'Mommantum Media Private Limited', foundingDate '2025', hardcoded sameAs, hasPart list, priceValidUntil 2030-12-31, injected default keyword list, caption text.",
+      "Wrong types: blog uses Article not BlogPosting; author always Organization though post.author_name exists; about.name uses raw post.category_id; case studies (/work/[slug]) use type='blog' so breadcrumb says Blog; /work listing breadcrumb says Store; services list url is https://www.mommantum.com/in/services (wrong /in/); separate Brand node duplicates Organization.",
+      "Hardcoded URLs https://www.mommantum.com in pages while generator defaults to non-www https://mommantum.com (www/non-www @id mismatch).",
+      "seo_setting.faq_section is passed to FAQ schema on privacy, terms, contact, about, blog, home, services pages even where no FAQ is visible.",
+      "Runtime hack strips the word 'himanshu' from titles. Remove the hack and report the dirty data.",
+      "Unsafe serialization: dangerouslySetInnerHTML with plain JSON.stringify (</script> and <!-- can break out).",
+      "Caching: service, SEO, case-study and site-setting admin APIs call revalidateTag only (no revalidatePath); site_setting change does not refresh all pages; pages also have ISR revalidate=60/300 plus unstable_cache TTLs.",
+      "Schema Panel references to remove: app/admin/schema/page.tsx, app/api/admin/schema/route.ts, nav link in app/admin/layout.tsx (~L198-210), 8 entries in lib/config/roles.ts (/admin/schema, /api/admin/schema), components manual-seo-schema, seo-json-ld, hoisted-schema, getSeoJsonLd in lib/data/seo.ts."
+    ]
+  },
+  "source_of_truth": {
+    "page_content": "its own content table (services, blog posts, case studies)",
+    "seo_title_description_canonical_og_keywords": "seo_setting (existing /admin/seo) with content-table fallback. The SAME resolver must feed generateMetadata AND JSON-LD.",
+    "blog_author": "post.author_name -> Person; if empty -> Organization (honest fallback)",
+    "dates": "DB published_at / updated_at / created_at only. Missing -> omit. No hardcoded dates.",
+    "faqs": "the same array the page renders visibly (services.faqs, post.faqs, home FAQ component). Never seo_setting.faq_section on pages that do not show it.",
+    "global_business_facts": "Add ONE nullable jsonb column site_setting.organization_profile (SQL file in /db-proposals, not executed on prod) editable inside the EXISTING Site Settings section of /admin/seo (no new panel). Ship a typed default in code equal to 'business_profile' below as fallback.",
+    "base_url": "https://www.mommantum.com (single function, used for canonicals, OG, schema, @id). Never localhost inside JSON-LD."
+  },
+  "business_profile": {
+    "note": "All values below were confirmed correct by the client. Use exactly. Anything not listed = omit.",
+    "legalName": "Mommantum",
+    "name": "Mommantum",
+    "alternateName": "Mommantum",
+    "url": "https://www.mommantum.com/",
+    "logo": "Use square /public/logo.png (500x500). Do NOT use a non-square image. ImageObject width/height must match the real file.",
+    "foundingDate": "2025-12-15",
+    "founder": {
+      "name": "Kuldeep Ahir",
+      "image": "/team/kuldeep.webp",
+      "jobTitle": "Founder"
+    },
+    "numberOfEmployees": {
+      "value": 15
+    },
+    "taxID": "08CTJPA2104B1ZI (GSTIN, client provided it for public use; mention in the final report that GSTIN embeds the PAN)",
+    "email": "kuldeep@mommantum.in",
+    "telephone": "+917742276031",
+    "whatsapp": "+917742276031 (same number; expose as contactPoint, contactType 'customer support', availableLanguage English/Hindi only if the site supports both)",
+    "address": {
+      "streetAddress": "B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass",
+      "addressLocality": "Jaipur",
+      "addressRegion": "Rajasthan",
+      "postalCode": "302029",
+      "addressCountry": "IN"
+    },
+    "clientsCanVisitOffice": true,
+    "add_local_schema": "Yes: ProfessionalService (same @id strategy, see templates)",
+    "openingHours": [
+      {
+        "days": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "opens": "09:00",
+        "closes": "21:00"
+      }
+    ],
+    "areaServed": [
+      "India",
+      "Worldwide (domestic and international)"
+    ],
+    "hasMap": "https://maps.app.goo.gl/m5GfvAHsZJ5chD4z7?g_st=aw (store as given). Try to resolve latitude/longitude from this link for geo (if the network blocks it, omit geo; do not guess).",
+    "sameAs": [
+      "https://www.instagram.com/mommantummedia/",
+      "https://www.facebook.com/profile.php?id=61585107904273"
+    ],
+    "sameAs_note": "Only these two social profiles were provided. Do not add LinkedIn/YouTube/X/Behance. Strip tracking params like ?igsh=. The website itself is not a sameAs entry.",
+    "legal_pages": {
+      "privacy": "/privacy-policy",
+      "terms": "/terms-and-conditions",
+      "refund": "none exists - omit"
+    },
+    "not_provided_omit": [
+      "tagline",
+      "companyDescription (derive ONLY from the visible site/meta description, never invent claims)",
+      "Google Business Profile URL",
+      "team members besides the founder",
+      "support hours/response time",
+      "Twitter handle",
+      "Facebook App ID",
+      "ratings/reviews",
+      "starting prices"
+    ]
+  },
+  "entity_ids": [
+    "{base}/#organization",
+    "{base}/#website",
+    "{base}/#logo",
+    "{base}/#localbusiness",
+    "{base}/#founder",
+    "{pageUrl}#webpage",
+    "{pageUrl}#breadcrumb",
+    "{pageUrl}#service",
+    "{pageUrl}#article",
+    "{pageUrl}#faq"
+  ],
+  "architecture": {
+    "folders": {
+      "src/lib/schema/config.ts": "constants, @context, ID suffixes, content-type registry",
+      "src/lib/schema/site.ts": "getSchemaSite(): base URL + organization_profile (cached, tag site_setting) + typed defaults",
+      "src/lib/schema/resolvers/*": "page, service, blog, case-study, collection: DB row -> neutral SchemaInput; ALSO used by generateMetadata so meta tags and JSON-LD match",
+      "src/lib/schema/templates/*": "webpage, breadcrumb, organization, website, local-business, service, blog-posting, case-study, collection, faq, person (pure functions)",
+      "src/lib/schema/build-graph.ts": "registry contentType -> templates; dedupe by @id; drop empty/undefined props; verify every @id reference exists in the graph",
+      "src/lib/schema/serialize.ts": "safe JSON-LD string: escape <, >, &, U+2028, U+2029",
+      "src/lib/schema/validate.ts": "dev/test-only checks",
+      "src/modules/common/components/json-ld/index.tsx": "server component, exactly ONE <script type=application/ld+json> per page",
+      "src/lib/revalidate.ts": "revalidateContent() central helper"
+    },
+    "flow": "content row + seo_setting -> resolver -> registry -> buildGraph -> serialize -> <JsonLd/> in server HTML. Page files contain one line, e.g. <JsonLd type='blog' data={post}/>.",
+    "one_graph_one_script": true,
+    "remove_Brand_node": true
+  },
+  "templates": {
+    "every_page": "WebPage (or subtype) + BreadcrumbList + compact Organization (name,url,logo,sameAs, same @id). name/description/url/image = SAME resolved values as <title>, meta description, canonical, og:image. inLanguage 'en-IN'. datePublished/dateModified only when real.",
+    "homepage": "+ WebSite (no SearchAction) + full Organization (legalName, alternateName, logo ImageObject, foundingDate, founder->Person, numberOfEmployees, taxID, email, telephone, contactPoint, sameAs, areaServed) + ProfessionalService local node (address, openingHoursSpecification Mo-Sa 09:00-21:00, hasMap, geo if resolvable, areaServed) + FAQPage from visible home FAQs.",
+    "about": "AboutPage; local node repeated with same @id. Person nodes only for real team data (founder only for now).",
+    "contact": "ContactPage; local node with same @id; contactPoint with email + telephone.",
+    "service /services/[slug]": "Service: name<-title, description<-seo description else service.description, url, image<-service.image, provider->#organization, serviceType<-title, areaServed<-profile, hasOfferCatalog<-service.points/outcomes (deliverables), keywords<-primary+secondary (primary first, max 6, no stuffing). offers ONLY if a real price field exists (default none). FAQPage<-service.faqs (must equal visible accordion).",
+    "listings (/services, /work, /blog)": "CollectionPage + ItemList (items from real rows; URL from slug); /blog uses Blog type. Fix the /in/services URL bug.",
+    "blog /blog/[slug]": "BlogPosting: headline<-title (warn if >110 chars, do not truncate silently), description<-seo desc else excerpt, url+mainEntityOfPage<-canonical, image<-featured_image (absolute), author<-Person(author_name) else Organization, datePublished<-published_at, dateModified<-updated_at (omit if missing), publisher->#organization, articleSection<-RESOLVED category NAME (look up category table, never raw id), keywords<-primary+secondary, FAQPage<-post.faqs only if visibly rendered.",
+    "case study /work/[slug]": "NOT the blog template. Article with articleSection 'Case Study'; about->client Organization{name} from the case study; mentions->related service @id if linkable; dates from DB timestamps (omit if none); image; description<-tagline/about. Breadcrumb Home > Work > title. Never invent result properties.",
+    "legal pages": "WebPage + BreadcrumbList only. No FAQPage.",
+    "/editz": "Treat as a Service page through the same Service template using data in modules/editz/lib/data.ts, OR flag in final report if it conflicts with /services/video-editing. Do not emit two conflicting Service entities for video editing. Its FAQ schema must equal its visible FAQ component. Do NOT promise delivery timelines in schema that are not in data.",
+    "/blog-ai": "inspect; give it the generic page template.",
+    "medusa store routes": "Emit Product/Offer ONLY if the store has real products and is publicly live. Otherwise no product schema (remove hardcoded priceValidUntil).",
+    "faq_rules": "FAQPage only if >=1 visible Q&A with identical plain text. Services: 4-8 items, 40-60 word answers (validator warns, does not block). Note for client: Google restricts FAQ rich results to authoritative gov/health sites; markup is still valid and useful for AI/answer engines. Never promise a rich result."
+  },
+  "keywords_rules": {
+    "source": "Keywords_for_MM.xlsx. Green cell = primary, other cells in the sheet = secondary.",
+    "storage": "seo_setting.primary_keyword / secondary_keywords for page_key 'service:{slug}' (existing admin SEO editor). Generate /db-proposals/seed_keywords.sql (upsert). Do not run on production.",
+    "use": "Appears in schema only as 'keywords' on WebPage/Service/BlogPosting (primary first, max 6). Primary should also appear in meta title, H1, first paragraph, and at least one FAQ question or answer (already done in the FAQs below where possible). Never keyword-stuff.",
+    "secondary_exclusions": "Drop junk/off-intent terms (e.g. 'google duo ad', 'script script', web-dev courses/internships, 'seo tools', 'yoast seo')."
+  },
+  "services_keywords_and_faqs": {
+    "instructions": [
+      "These FAQs were written from the client's docx page content (Service_focus___video_edits_page_content_mm.docx) and approved business facts. Do not add claims, prices, guarantees or timelines.",
+      "Create /db-proposals/seed_service_faqs.sql that UPDATEs services.faqs (jsonb array of {question,answer}) WHERE slug = ... Verify real slugs in the services table first. If a slug differs, map by title and report the mapping. If a service does not exist in the table, report it and skip.",
+      "Services whose slug here is marked 'verify slug' (copywriting, marketing-consulting, ai-agents, ai-video-editing, podcast-editing, motion-graphics) were not linked in the docx. Confirm in DB.",
+      "FAQs MUST be visibly rendered on the page. The existing FaqAccordion on /services/[slug] already renders service.faqs: confirm that it renders all answers in the HTML (not only after a click that loads them lazily), so the schema matches visible text.",
+      "In local development, if the DB is not writable, add a local fixture/mocked data layer for tests, never a hardcoded schema."
+    ],
+    "services": [
+      {
+        "slug": "performance-marketing",
+        "title_hint": "Performance Marketing",
+        "primary_keyword": "performance marketing",
+        "secondary_keywords": [
+          "performance marketing agency in india",
+          "performance marketing services",
+          "performance marketing campaigns",
+          "performance based marketing",
+          "performance marketing platforms"
+        ],
+        "primary_keyword_status": "green",
+        "faqs": [
+          {
+            "question": "What does a performance marketing agency in India actually do?",
+            "answer": "Performance marketing means every rupee you spend on ads should lead to something measurable, like a sale, a lead, or a booked call. We run campaigns on Meta Ads and Google Ads, test different creatives, and build a clear path from the first click to the final purchase.",
+            "answer_words": 48
+          },
+          {
+            "question": "Which platforms do you run performance marketing campaigns on?",
+            "answer": "We run performance marketing campaigns mainly on Meta Ads and Google Ads. Before spending anything, we study your market, your competitors, and your audience, so budget goes to the platform where your buyers actually are and where results can be measured, not wherever is simply popular.",
+            "answer_words": 46
+          },
+          {
+            "question": "Which marketing performance metrics do you track?",
+            "answer": "We track ROAS, CAC, and cost per result closely, so nothing runs on guesswork. Reporting stays honest and simple. You see what you spent, what it produced, and what we plan to test or scale next, based on real numbers instead of impressions or vanity views.",
+            "answer_words": 46
+          },
+          {
+            "question": "What is the difference between brand and performance marketing?",
+            "answer": "Brand marketing builds awareness slowly over time, while performance based marketing is built to get direct, trackable results. We focus on the second, because many brands come to us when they need actual revenue, not just visibility. Both work best when they support each other.",
+            "answer_words": 45
+          },
+          {
+            "question": "Do you work as an ecommerce performance marketing agency for D2C brands?",
+            "answer": "Yes. We work with D2C and ecommerce brands across India and internationally. We set campaigns live, test different creatives and offers, and only scale up spend once the numbers support it. Our team is based in Jaipur and works with clients remotely and in person.",
+            "answer_words": 45
+          },
+          {
+            "question": "How does performance marketing connect with your other services?",
+            "answer": "Paid ads never run separately from the rest of your brand. Performance marketing connects with our SEO, conversion rate optimization, web development, and social media marketing work, so paid growth and organic growth support each other instead of pulling in different directions.",
+            "answer_words": 42
+          }
+        ]
+      },
+      {
+        "slug": "social-media-marketing",
+        "title_hint": "Social Media Marketing",
+        "primary_keyword": "social media marketing agency in india",
+        "secondary_keywords": [
+          "social media marketing services",
+          "social media marketing company in jaipur",
+          "instagram marketing service",
+          "social media marketing strategy",
+          "benefits of social media marketing"
+        ],
+        "primary_keyword_status": "proposed",
+        "faqs": [
+          {
+            "question": "What do your social media marketing services include?",
+            "answer": "Our social media marketing services cover content planning, daily posting, and audience engagement, mostly built around Instagram. We prepare a content calendar with a mix of reels, posts, and stories, so your page stays active without feeling random, and we focus on genuine engagement rather than chasing likes.",
+            "answer_words": 48
+          },
+          {
+            "question": "Are you a social media marketing agency in India or only in Jaipur?",
+            "answer": "We are based in Jaipur and work as a social media marketing agency in India for D2C and ecommerce brands, and we also take on international clients. Whether you searched for a social media marketing agency near me or a national partner, the day to day work is handled the same way.",
+            "answer_words": 52
+          },
+          {
+            "question": "Do you offer Instagram marketing services?",
+            "answer": "Yes. Instagram is where most D2C brands find their buyers, so our Instagram marketing service covers content creation, reels, captions, and staying active with your community. The focus is always genuine engagement and building a real following that turns into sales, not just collecting likes.",
+            "answer_words": 45
+          },
+          {
+            "question": "Do you use AI in social media marketing?",
+            "answer": "We use AI in a few places, mainly to plan content faster and work out what kinds of posts tend to perform better over time. The content is still shaped around your brand and audience, so it feels consistent and human rather than automated or generic.",
+            "answer_words": 46
+          },
+          {
+            "question": "Do you combine organic content with paid promotion?",
+            "answer": "Yes. Good social media work usually needs both sides working together: organic content to build trust and paid promotion to reach people faster. This is where the benefits of social media marketing really show up, and our performance marketing team plans paid support alongside your content calendar.",
+            "answer_words": 47
+          },
+          {
+            "question": "How do you plan a social media strategy before posting?",
+            "answer": "Before we post anything, we spend time understanding your brand and looking at what is already working for similar D2C and ecommerce businesses. From there we build a content calendar, so every reel, post, and story has a purpose and your page grows steadily instead of posting at random.",
+            "answer_words": 49
+          }
+        ]
+      },
+      {
+        "slug": "search-engine-optimization",
+        "title_hint": "SEO & AEO",
+        "primary_keyword": "seo services india",
+        "secondary_keywords": [
+          "best seo company in jaipur",
+          "seo agency in india",
+          "seo audit",
+          "shopify seo company",
+          "local seo company"
+        ],
+        "primary_keyword_status": "green",
+        "faqs": [
+          {
+            "question": "What do your SEO services in India include?",
+            "answer": "Our SEO services in India start with a full SEO audit, then cover on page SEO like titles and content structure, and off page SEO like backlinks and mentions. We also handle Shopify SEO for ecommerce stores, local SEO for city based brands, and general SEO for D2C brands growing across India.",
+            "answer_words": 52
+          },
+          {
+            "question": "How do you start an SEO project?",
+            "answer": "We run a full SEO audit before touching anything on your site. It shows what is actually wrong, whether that is weak content, slow load times, broken canonical tags, or pages that search engines cannot read well. Then we fix both the on page and off page sides together.",
+            "answer_words": 49
+          },
+          {
+            "question": "Do you promise SEO rankings overnight?",
+            "answer": "No. Search engines do not work that way, and we never promise overnight results. We keep reporting simple and honest, and we care more about whether your traffic actually buys something than about a report full of rankings. SEO builds over time as trust builds with Google.",
+            "answer_words": 47
+          },
+          {
+            "question": "Do you offer Shopify SEO and local SEO?",
+            "answer": "Yes. We handle Shopify SEO for ecommerce stores, local SEO for brands serving specific cities like Jaipur, and general SEO for D2C brands trying to grow across India. The plan always starts with what your actual customers search for before they buy, not random keywords.",
+            "answer_words": 45
+          },
+          {
+            "question": "What is AEO and do you include it?",
+            "answer": "AEO means answer engine optimization. More people now ask questions through AI tools and voice assistants, so we structure your content to help your brand show up there too, not just on a regular Google search page. We include it alongside traditional SEO work.",
+            "answer_words": 44
+          },
+          {
+            "question": "Have you achieved SEO results for a real brand?",
+            "answer": "Yes. For a wellness brand we worked with, organic growth became a real part of their revenue. You can read the full story in our Jalvayu Wellness case study, which shows how SEO worked together with branding and marketing instead of running as a separate task.",
+            "answer_words": 46
+          }
+        ]
+      },
+      {
+        "slug": "d2c-branding-scale-growth",
+        "title_hint": "D2C Branding & Scale Growth",
+        "primary_keyword": "branding agency in india",
+        "secondary_keywords": [
+          "branding agency",
+          "brand identity design agency",
+          "branding and marketing agency",
+          "d2c marketing strategy",
+          "d2c brands"
+        ],
+        "primary_keyword_status": "green",
+        "faqs": [
+          {
+            "question": "What does your D2C branding and growth service include?",
+            "answer": "We work on brand positioning, visual identity, and messaging so your D2C business feels like one connected experience, from product pages to packaging to retention emails. We also write website copy, product pages, and landing pages, and look at your acquisition channels to find the right mix.",
+            "answer_words": 47
+          },
+          {
+            "question": "Why does a D2C brand need more than a good product?",
+            "answer": "A good product is not enough anymore. Many D2C brands launch with something solid, but the website confuses people, the brand voice keeps changing, and customers do not stick around. If things do not say the same thing everywhere, that gap quietly costs you sales.",
+            "answer_words": 45
+          },
+          {
+            "question": "Are you a branding agency in India that also handles marketing?",
+            "answer": "Yes. As a branding agency in India, we connect branding with performance marketing and social media marketing, so every part of your D2C business grows in the same direction. Branding does not sit alone as a design task, it supports ads, content, and your website.",
+            "answer_words": 45
+          },
+          {
+            "question": "What results have your D2C clients seen?",
+            "answer": "A wellness brand we worked with grew its monthly revenue five times in six months once branding and marketing worked together. A street food brand, Urban Vada Pav, grew daily footfall from 40 to 210. Both are covered in detail in our case studies.",
+            "answer_words": 44
+          },
+          {
+            "question": "Do you help with customer retention after the first sale?",
+            "answer": "Yes. Combined with retention programmes like email and SMS, our branding and website work helps turn one time buyers into repeat customers instead of losing them after the first sale. Consistent messaging across ads, site, and emails makes people far more likely to come back.",
+            "answer_words": 45
+          }
+        ]
+      },
+      {
+        "slug": "conversion-rate-optimization",
+        "title_hint": "Conversion Rate Optimization",
+        "primary_keyword": "conversion rate optimization services",
+        "secondary_keywords": [
+          "conversion rate optimization agency",
+          "conversion rate optimization in digital marketing",
+          "conversion rate optimization agency in india"
+        ],
+        "primary_keyword_status": "proposed",
+        "faqs": [
+          {
+            "question": "What do your conversion rate optimization services include?",
+            "answer": "Our conversion rate optimization services start with a full audit of your product pages, checkout flow, and overall site experience to find exactly where visitors drop off. We then fix those moments and test changes through A/B testing, rather than assuming what will work.",
+            "answer_words": 44
+          },
+          {
+            "question": "How do you decide what to fix on my website?",
+            "answer": "We look at real user behaviour: how people scroll, where they click, and where they stop. Sometimes the problem is a confusing call to action, sometimes a slow page, and sometimes too much friction before checkout. The data decides what we change first.",
+            "answer_words": 43
+          },
+          {
+            "question": "What conversion improvements have you delivered?",
+            "answer": "A kids clothing brand, The Kids Store, saw its conversion rate rise from 0.6% to 2.8%. A wellness brand, Jalvayu Wellness, improved its website conversion rate from 0.7% to 3.1%. Both results are explained in our case studies with the work behind them.",
+            "answer_words": 43
+          },
+          {
+            "question": "Why optimize conversions before spending more on ads?",
+            "answer": "The traffic you already have is traffic you already paid for. Improving how much of it converts is one of the most direct ways to grow without raising your ad budget, which means more purchases, fewer drop offs, and a lower cost per customer over time.",
+            "answer_words": 46
+          },
+          {
+            "question": "Is conversion rate optimization in digital marketing separate from SEO and ads?",
+            "answer": "No. It works best alongside SEO and paid campaigns, since better pages help every channel perform better. We connect it with our performance marketing and web development services, because a well built page and a well run campaign need to work together to convert.",
+            "answer_words": 44
+          }
+        ]
+      },
+      {
+        "slug": "copywriting",
+        "title_hint": "Copywriting",
+        "primary_keyword": "copywriting",
+        "secondary_keywords": [
+          "website copywriting",
+          "email copywriting",
+          "copywriting facebook ads",
+          "best copywriting ads"
+        ],
+        "primary_keyword_status": "proposed (no green in sheet; verify slug)",
+        "faqs": [
+          {
+            "question": "What copywriting services do you offer?",
+            "answer": "Our copywriting services cover ad copy, website copywriting, product descriptions, and email sequences, each written for how people actually behave on that platform. SEO copywriting is part of this too, since we write around what people already search for, so traffic is more likely to convert.",
+            "answer_words": 46
+          },
+          {
+            "question": "What is the difference between copywriting and content writing?",
+            "answer": "Content writing builds trust over time, while copywriting is built to get someone to act right now. Many brands confuse the two. Copywriting says exactly what a product does, who it is for, and why someone should care, in a way simple enough to understand at a glance.",
+            "answer_words": 48
+          },
+          {
+            "question": "Do you use AI for copywriting?",
+            "answer": "We use AI as a tool to speed up research and early drafts, but nothing goes live without a real writer shaping it to match your brand voice. That keeps the work fast while making sure every ad, page, and email sounds like your brand.",
+            "answer_words": 45
+          },
+          {
+            "question": "Why hire a copywriting team instead of a freelance copywriter?",
+            "answer": "A freelance copywriter can help with a one off project, but most growing brands need copy that stays consistent across ads, website, emails, and product pages. We treat copywriting as something to test and improve, not write once and leave alone.",
+            "answer_words": 41
+          },
+          {
+            "question": "Has your copywriting improved results for real brands?",
+            "answer": "Yes. A kids clothing brand saw its conversion rate climb from 0.6% to 2.8% once its copy matched what buyers needed to hear. A street food brand grew daily footfall from 40 to 210, largely because its messaging finally matched what customers wanted to hear.",
+            "answer_words": 45
+          }
+        ]
+      },
+      {
+        "slug": "marketing-consulting",
+        "title_hint": "Marketing Strategy Consulting",
+        "primary_keyword": null,
+        "secondary_keywords": [],
+        "primary_keyword_status": "no keyword sheet provided; verify slug",
+        "faqs": [
+          {
+            "question": "What does your marketing strategy consulting involve?",
+            "answer": "Before suggesting anything, we take time to understand your business: what you sell, who buys it, and where things are breaking down. We then build a growth plan suited to your stage, covering your offer and pricing, brand positioning, and which channels deserve your time and budget now versus later.",
+            "answer_words": 50
+          },
+          {
+            "question": "Who is marketing consulting meant for?",
+            "answer": "It suits brands that are not short on effort but short on direction. If you run ads, post on social media, and try some SEO, yet none of it feels connected, that is usually a strategy problem rather than a hard work problem, and this is where we start.",
+            "answer_words": 49
+          },
+          {
+            "question": "Is it just a strategy document, or do you help execute?",
+            "answer": "Our consulting does not stop at a document full of suggestions. We stay involved, review what is working, and adjust the plan as real results come in. The strategy connects with our performance marketing and D2C branding services, so it is something you can actually execute.",
+            "answer_words": 46
+          },
+          {
+            "question": "Do you build a custom plan or use a generic template?",
+            "answer": "Every plan is custom. We do not copy a generic template from somewhere else. Once we know where the gaps are, we build a growth plan that makes sense for your stage as a business, based on your offer, positioning, and where your customers already are.",
+            "answer_words": 46
+          },
+          {
+            "question": "What results has strategy-led work delivered?",
+            "answer": "A wellness brand, Jalvayu Wellness, grew monthly revenue five times in six months once its strategy, branding, and execution moved in the same direction. A street food brand, Urban Vada Pav, grew daily footfall from 40 to 210 using the same approach.",
+            "answer_words": 42
+          }
+        ]
+      },
+      {
+        "slug": "web-app-development",
+        "title_hint": "Web & App Development",
+        "primary_keyword": "web development company in jaipur",
+        "secondary_keywords": [
+          "cms web development services",
+          "web development agency near me",
+          "web portal development company",
+          "progressive web app development company",
+          "shopify web development"
+        ],
+        "primary_keyword_status": "green",
+        "faqs": [
+          {
+            "question": "What does a web development company in Jaipur like Mommantum build?",
+            "answer": "As a web development company in Jaipur, we build websites and apps meant to do a job: help someone understand your product fast, trust it, and take action without getting stuck. That includes ecommerce stores, custom web applications, tools, portals, and dashboards, built on the stack that fits.",
+            "answer_words": 48
+          },
+          {
+            "question": "Which platforms do you use for ecommerce web development?",
+            "answer": "For ecommerce brands, we handle ecommerce web development on platforms like Shopify and WordPress, built to move people from browsing to checkout without friction. For brands that need more than a standard site, we build custom web applications using whichever stack fits the project.",
+            "answer_words": 44
+          },
+          {
+            "question": "Will my website work well on mobile?",
+            "answer": "Yes. Most people browsing D2C brands in India are on their phones, so we build with clean navigation, fast load times, and a structure that makes sense on mobile. Good custom web development removes every small thing that makes a visitor hesitate before buying.",
+            "answer_words": 44
+          },
+          {
+            "question": "Do you support the website after launch?",
+            "answer": "Yes. We stay involved after launch, since a website is never really finished. It needs updates, speed checks, and small fixes as your brand grows, so the site keeps supporting your marketing instead of slowly falling behind. This ongoing support covers updates, speed checks, and fixes without starting over.",
+            "answer_words": 49
+          },
+          {
+            "question": "Does web development connect with your SEO and ads work?",
+            "answer": "Yes. A website built in isolation rarely performs as it should. We build pages that support your SEO work and convert the traffic your performance marketing campaigns bring in, so the site, the search visibility, and the ads all work together.",
+            "answer_words": 41
+          }
+        ]
+      },
+      {
+        "slug": "ai-automation",
+        "title_hint": "AI Automation",
+        "primary_keyword": "ai automation agency",
+        "secondary_keywords": [
+          "ai automation services",
+          "ai workflow automation",
+          "ai marketing automation",
+          "ai driven automation"
+        ],
+        "primary_keyword_status": "proposed",
+        "faqs": [
+          {
+            "question": "What does an AI automation agency like Mommantum do?",
+            "answer": "As an AI automation agency, we hand repeated small tasks to a system so your team stops doing them manually every day, like replying to the same questions, updating the same sheets, and chasing the same follow ups. We start by watching how your business actually runs.",
+            "answer_words": 47
+          },
+          {
+            "question": "What can you automate with AI?",
+            "answer": "Our AI automation services are built around your workflow. That can mean an AI chat agent handling customer queries, automated follow ups, or connecting tools you already use so information moves between them without anyone copying and pasting, including AI marketing automation for leads.",
+            "answer_words": 44
+          },
+          {
+            "question": "Do you install a generic bot?",
+            "answer": "No. No two businesses run the same way, so we do not drop in a generic bot and call it done. We build around your actual workflow, test it with real scenarios before it goes live, and check it again afterwards.",
+            "answer_words": 41
+          },
+          {
+            "question": "Does automation connect with marketing and sales?",
+            "answer": "Yes. Automation on its own only goes so far if it sits disconnected from marketing and sales. We make sure it supports your performance marketing and social media work too, so leads get followed up faster and nothing falls through during a busy campaign.",
+            "answer_words": 44
+          },
+          {
+            "question": "Do you support the automation after it goes live?",
+            "answer": "Yes. Once it is live, we stay involved, checking how the automation performs and adjusting it as your business grows, rather than treating it as a one time setup. AI workflow automation works best when it keeps improving with your business.",
+            "answer_words": 41
+          }
+        ]
+      },
+      {
+        "slug": "ai-agents",
+        "title_hint": "AI Agents",
+        "primary_keyword": "ai agents",
+        "secondary_keywords": [
+          "agentic ai frameworks",
+          "n8n ai agent",
+          "building ai agents",
+          "types of ai agents"
+        ],
+        "primary_keyword_status": "green (verify slug)",
+        "faqs": [
+          {
+            "question": "What are AI agents and how are they different from basic automation?",
+            "answer": "Basic automation follows one fixed step. An AI agent can look at a situation, decide what to do next, and carry a task through to the end on its own. Instead of your team checking, replying, and updating things one by one, the agent handles it.",
+            "answer_words": 46
+          },
+          {
+            "question": "What can an AI chat agent do for my business?",
+            "answer": "An AI chat agent replies to customers the moment they message, day or night, without your team sitting by the phone. For real estate it can qualify leads and answer property questions, and in healthcare it can handle appointment queries and basic patient questions.",
+            "answer_words": 44
+          },
+          {
+            "question": "Which frameworks and tools do you use to build AI agents?",
+            "answer": "We build using proper agentic AI frameworks and tools like n8n. We match the type of agent, whether model based, utility based, or a simpler rule based one, to what your business actually needs, rather than picking whatever sounds most advanced.",
+            "answer_words": 41
+          },
+          {
+            "question": "How do you test an AI agent before it goes live?",
+            "answer": "We test the agent against real situations before launch. After launch, we keep checking how it performs and adjust it as your business changes, so you are not stuck managing it constantly and it keeps working as your needs grow.",
+            "answer_words": 40
+          },
+          {
+            "question": "Will AI agents fit with the tools and website I already use?",
+            "answer": "Yes. Our AI agent work connects with our AI automation and web development services, so the agent fits properly into the tools and website you already use instead of sitting on its own as a separate system that nobody maintains.",
+            "answer_words": 40
+          }
+        ]
+      },
+      {
+        "slug": "ai-video-generation",
+        "title_hint": "AI Video Generation",
+        "primary_keyword": "text to video generator ai",
+        "secondary_keywords": [
+          "image to video generator ai",
+          "ai video generator online",
+          "ai video generation",
+          "best ai video generator"
+        ],
+        "primary_keyword_status": "proposed ('ai video generator' KD 86 too hard)",
+        "faqs": [
+          {
+            "question": "What does your AI video generator service do?",
+            "answer": "You give us your product photos, a script, or even just an idea, and we turn it into a finished video without you needing to arrange a shoot every time. It removes the usual crew, booking, and waiting time, so the moment you wanted to catch is not missed.",
+            "answer_words": 49
+          },
+          {
+            "question": "Do you offer text to video and image to video?",
+            "answer": "Yes. We work with text to video generator AI setups for turning scripts straight into content, and image to video generator AI for cases where you already have great product photos sitting unused and just need them to move. Both routes let you produce fresh video content faster, without arranging a separate shoot each time.",
+            "answer_words": 55
+          },
+          {
+            "question": "Can AI generated video help me test ad hooks?",
+            "answer": "Yes. Testing five different video hooks for a Meta ad normally means five shoots or a lot of extra editing. With AI generated video we can turn out multiple versions quickly, so you test and see what works instead of guessing which message will land.",
+            "answer_words": 45
+          },
+          {
+            "question": "Do I need to organise a shoot?",
+            "answer": "No. That is the main point of this service. With your product photos, script, or idea, we produce the video, so you do not need to arrange a crew or a shoot every single time you want new content. You simply share what you have and we handle the rest of the production process.",
+            "answer_words": 54
+          },
+          {
+            "question": "How does it work with your scripting and editing services?",
+            "answer": "Scripting is usually the first step before video creation. Once the script is ready, it feeds into our AI video generation work, and our video editing and AI video editing services can polish the final result so the whole process moves faster from idea to finished video.",
+            "answer_words": 47
+          }
+        ]
+      },
+      {
+        "slug": "content-video-scripting",
+        "title_hint": "Content & Video Scripting",
+        "primary_keyword": "video script",
+        "secondary_keywords": [
+          "short video script",
+          "how to write script for youtube video",
+          "create script"
+        ],
+        "primary_keyword_status": "proposed (no green in sheet)",
+        "faqs": [
+          {
+            "question": "What is a video script and why does it matter?",
+            "answer": "A script is the written plan for a video: what gets said, in what order, and how it flows from start to finish. It is the base every good video is built on, because a weak script means confused viewers, low watch time, and ads skipped early.",
+            "answer_words": 47
+          },
+          {
+            "question": "How do you write a script for a YouTube video?",
+            "answer": "We start with the main point you want to get across, build an opening that hooks the viewer in the first few seconds, then structure the middle and end so the video flows naturally instead of feeling scattered. Full YouTube and explainer scripts are part of our service.",
+            "answer_words": 48
+          },
+          {
+            "question": "Do you write short video scripts for reels and shorts?",
+            "answer": "Yes. Most of our scripting work is for short form content like reels, shorts, and quick social videos, since that is where most brands need consistent, fast turnaround content. We also create hooks and openings written to stop the scroll.",
+            "answer_words": 40
+          },
+          {
+            "question": "Can your scripts be used with text to video tools?",
+            "answer": "Yes. We write scripts specifically so they work well when turned into video using text to video generation, keeping sentences clear and paced right for on screen delivery, which helps when you produce videos without a full shoot. This makes the later video production step faster and smoother.",
+            "answer_words": 48
+          },
+          {
+            "question": "Do you help with content planning, not only scripts?",
+            "answer": "Yes. We help plan what content to create in the first place, so scripts are not written in isolation but fit into a proper content calendar and brand message. That means more ideas ready to shoot without last minute scrambling.",
+            "answer_words": 40
+          },
+          {
+            "question": "Will a better script improve my results?",
+            "answer": "Yes. A clear script means people watch longer, understand the message faster, and are more likely to act on it, which directly helps both organic reach and ad performance. Scripts can also be written in multiple variations for testing. Better scripts also make content production faster, with less back and forth.",
+            "answer_words": 51
+          }
+        ]
+      },
+      {
+        "slug": "video-editing",
+        "title_hint": "Video Editing",
+        "primary_keyword": "video editing services",
+        "secondary_keywords": [
+          "video editing agency",
+          "professional video editing service",
+          "youtube video editor near me",
+          "professional video editors near me"
+        ],
+        "primary_keyword_status": "green",
+        "faqs": [
+          {
+            "question": "What does your video editing service include?",
+            "answer": "It covers cutting and trimming footage, adding transitions, captions, sound design, and basic colour correction, turning raw clips into a finished, publish ready video. We handle ads, reels, YouTube long form content, and corporate videos, with editing styles tailored for Instagram, YouTube, and TikTok.",
+            "answer_words": 44
+          },
+          {
+            "question": "Do you edit for platforms like TikTok and Instagram?",
+            "answer": "Yes. We edit differently depending on the platform, since a video for TikTok or reels needs a different pace and style compared to a longer YouTube video. We also stay updated on trending styles, like quick cuts and on screen text, so content does not feel dated.",
+            "answer_words": 47
+          },
+          {
+            "question": "How is a video editing agency different from a freelance editor?",
+            "answer": "Working with an agency means consistent quality, faster turnaround, and editing that fits into your overall content and marketing plan, not just a one off task. We also support you as your content volume grows, so quality stays steady. Fast delivery without compromising quality is the aim.",
+            "answer_words": 47
+          },
+          {
+            "question": "Can you edit multiple versions of a video for testing?",
+            "answer": "Yes. We can cut different versions with varied pacing, hooks, or captions, so you can test what performs best with your audience. This works especially well for ads and social content, where small edits can change how long people keep watching.",
+            "answer_words": 41
+          },
+          {
+            "question": "Do I need a script, or can you work with raw footage?",
+            "answer": "Either works. If you already have a script from our content and video scripting service, editing becomes even faster, but we can also work directly with raw footage and turn it into a finished, publish ready video. Share whatever you have and we will work out the best starting point.",
+            "answer_words": 50
+          },
+          {
+            "question": "Will better video editing improve performance?",
+            "answer": "Yes. A tighter, well paced edit keeps people watching longer, which directly helps both organic reach and paid ad performance. Good editing also gives your videos a more consistent, polished look across all your content. Multiple edited versions can also be tested, so you learn which style your audience responds to best.",
+            "answer_words": 52
+          }
+        ]
+      },
+      {
+        "slug": "ai-video-editing",
+        "title_hint": "AI Video Editing",
+        "primary_keyword": "ai video editing",
+        "secondary_keywords": [
+          "ai powered video editor",
+          "ai edit video",
+          "video editor ai",
+          "ai video edit"
+        ],
+        "primary_keyword_status": "proposed (no green in sheet; verify slug)",
+        "faqs": [
+          {
+            "question": "What is AI video editing?",
+            "answer": "AI video editing means using AI tools to handle certain parts of editing on their own, like trimming pauses, syncing captions, or spotting highlight moments, instead of doing every step by hand. It speeds up the repetitive groundwork so more videos can go out in the same time.",
+            "answer_words": 48
+          },
+          {
+            "question": "Does AI edited content look robotic?",
+            "answer": "No. Done properly and reviewed afterward, it looks completely normal. AI takes care of the repetitive groundwork, but the final feel of the video still comes from an actual editor, who adds a manual review and polish on top of every AI edit.",
+            "answer_words": 43
+          },
+          {
+            "question": "Do you check videos manually after AI editing?",
+            "answer": "Every time. AI speeds up the repetitive bits, but a video only goes out after someone has reviewed it properly. This keeps quality consistent, so faster production never means a drop in how the final video looks and feels. You get the speed of AI with the judgement of a real editor.",
+            "answer_words": 52
+          },
+          {
+            "question": "Does AI editing work for long YouTube videos?",
+            "answer": "Yes. AI editing works well on longer content too, and is especially useful for trimming dead space or pulling good highlight clips out of a longer recording. We support both short form and long form content, adjusting the edit for each platform.",
+            "answer_words": 42
+          },
+          {
+            "question": "Can AI editing help me publish more content?",
+            "answer": "Yes, that is the point. Faster editing means more videos can realistically go out in the same amount of time, so brands and creators can keep a regular posting schedule without extra workload or a drop in quality. Multiple quick versions can also be edited for testing, without waiting long for each one.",
+            "answer_words": 53
+          },
+          {
+            "question": "How is AI video editing different from AI video generation?",
+            "answer": "AI video editing improves footage you already have, while AI video generation builds a video almost entirely through AI from photos, scripts, or ideas. They are separate services at Mommantum, and we can recommend which one fits your project. Tell us what footage you already have and we will point you to the right one.",
+            "answer_words": 55
+          }
+        ]
+      },
+      {
+        "slug": "podcast-editing",
+        "title_hint": "Podcast Editing",
+        "primary_keyword": "podcast editing",
+        "secondary_keywords": [
+          "podcast audio editing",
+          "video podcast",
+          "audio podcast"
+        ],
+        "primary_keyword_status": "green (verify slug)",
+        "faqs": [
+          {
+            "question": "What does podcast editing involve?",
+            "answer": "It covers cleaning up background noise, removing awkward pauses and filler words, balancing audio levels between speakers, and adding intros or outros, so the episode sounds polished and ready to publish. Our podcast editing service supports both audio and video formats.",
+            "answer_words": 41
+          },
+          {
+            "question": "Can you edit both audio and video podcasts?",
+            "answer": "Yes. Whether you record audio only or on camera as a video podcast, we edit both formats and can sync them together when needed. We also prepare multiple episode formats for different platforms, so your content reaches listeners wherever they are.",
+            "answer_words": 41
+          },
+          {
+            "question": "Can you turn my podcast into short clips for social media?",
+            "answer": "Yes. We regularly cut full episodes into short, shareable clips that work well on Instagram and YouTube Shorts. This helps your podcast reach new people without you having to edit highlights yourself after every recording. Clips are formatted to suit each platform, so highlights from an episode can keep working for you long after publishing.",
+            "answer_words": 55
+          },
+          {
+            "question": "How long does podcast editing take?",
+            "answer": "It depends on episode length and how much cleanup is needed, but we work to fit within your regular publishing schedule so episodes go out on time. Consistent publishing and cleaner audio both matter for keeping listeners over the long run.",
+            "answer_words": 41
+          },
+          {
+            "question": "Can you help if I am just starting a podcast?",
+            "answer": "Yes. If you are figuring out how to create a podcast from scratch, we can guide you on recording setup and handle the editing once you start producing episodes. A decent microphone and a quiet space go a long way.",
+            "answer_words": 40
+          },
+          {
+            "question": "Will better editing help my podcast grow?",
+            "answer": "Yes. Cleaner audio and consistent publishing both directly affect listener retention, which is a major factor in podcast growth over time. Editing also saves you hours, so you can spend your time on recording and building your audience. Structuring episodes for better pacing and flow also helps listeners stay until the end.",
+            "answer_words": 52
+          }
+        ]
+      },
+      {
+        "slug": "motion-graphics",
+        "title_hint": "Motion Graphics",
+        "primary_keyword": "motion graphics agency",
+        "secondary_keywords": [
+          "motion graphics animation",
+          "motion graphics video",
+          "animation and motion graphics",
+          "adobe after effects motion graphics"
+        ],
+        "primary_keyword_status": "proposed (no green in sheet; verify slug)",
+        "faqs": [
+          {
+            "question": "What are motion graphics?",
+            "answer": "Motion graphics are animated visuals, text, icons, shapes, or graphics that move. They are used to explain something, highlight a point, or make a piece of content more interesting to watch, and they are built digitally rather than filmed with a camera.",
+            "answer_words": 42
+          },
+          {
+            "question": "Can motion graphics be added to videos I already have?",
+            "answer": "Yes, this is common. We often add animated captions, transitions, or callouts into footage that is already edited, to strengthen a specific part of the video. This works alongside our video editing service without needing to reshoot anything. It is a simple way to lift existing content.",
+            "answer_words": 47
+          },
+          {
+            "question": "What kinds of motion graphics do you create?",
+            "answer": "The range runs from simple text and icon animation to detailed explainer style graphics and logo animation, plus short brand intros. We choose the style based on what actually suits your content, not on what happens to be trending that month.",
+            "answer_words": 41
+          },
+          {
+            "question": "Do motion graphics help with social media ads?",
+            "answer": "Yes. Movement naturally catches attention faster than a still image, so motion graphics tend to help ads stop the scroll more effectively. Every bit of movement supports what you are trying to say, rather than just making the ad look busy.",
+            "answer_words": 41
+          },
+          {
+            "question": "Will the animation match my brand?",
+            "answer": "Yes. We build the animation style around your brand colours, fonts, and general tone, so it feels like it belongs to your brand rather than being bolted on. We keep one consistent visual style running across everything we animate for you.",
+            "answer_words": 41
+          },
+          {
+            "question": "Do you use Adobe After Effects?",
+            "answer": "Mostly, yes. Adobe After Effects gives us the flexibility to build something custom around your brand instead of relying on generic, pre made templates. This applies to both short clips and longer videos, including full animated explainers. The result is animation shaped around your message, not a recycled look.",
+            "answer_words": 49
+          }
+        ]
+      }
+    ]
+  },
+  "home_faqs": {
+    "instructions": "Render these visibly on the homepage (add a small server-rendered FAQ section component in the existing design style, or extend the existing home FAQ if one exists). Source them from seo_setting.faq_section for page_key 'home' (SQL seed file) or a typed content module; the schema reads the same source as the visible component.",
+    "faqs": [
+      {
+        "question": "What does Mommantum do?",
+        "answer": "Mommantum is a Jaipur based digital marketing agency and growth studio. We help D2C and ecommerce brands grow through performance marketing, SEO, social media marketing, branding, conversion rate optimization, web development, AI automation, AI agents, and video services, all connected so each channel supports the others.",
+        "answer_words": 46
+      },
+      {
+        "question": "Where is Mommantum located and can I visit the office?",
+        "answer": "Our office is at B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass, Jaipur, Rajasthan 302029. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
+        "answer_words": 40
+      },
+      {
+        "question": "Do you work with clients outside Jaipur?",
+        "answer": "Yes. Although we are based in Jaipur, we work with brands across India and with international clients. The same strategy, reporting, and day to day attention applies wherever your business is based, whether you meet us in Jaipur or work with us remotely.",
+        "answer_words": 43
+      },
+      {
+        "question": "Which services does Mommantum offer?",
+        "answer": "We offer performance marketing, SEO, social media marketing, D2C branding, conversion rate optimization, copywriting, marketing consulting, web and app development, AI automation, AI agents, AI video generation, video scripting, video editing, AI video editing, podcast editing, and motion graphics. Visit our services page for details on each.",
+        "answer_words": 47
+      },
+      {
+        "question": "How can I contact Mommantum?",
+        "answer": "You can email kuldeep@mommantum.in or call or WhatsApp us on 7742276031. Our team is available Monday to Saturday, 9am to 9pm. You can also use the contact page on our website and tell us about your brand and goals. Just reach out with your brand and goals.",
+        "answer_words": 47
+      }
+    ]
+  },
+  "caching_and_revalidation": {
+    "central_helper": "src/lib/revalidate.ts revalidateContent({type, slug, oldSlug})",
+    "matrix": {
+      "service create/update/delete": "tag 'services'; paths /services, /services/{slug} (old and new), /",
+      "blog": "tag 'blog-posts'; paths /blog, /blog/{slug} (old and new)",
+      "case study": "tag 'case-studies'; paths /work, /work/{slug}, /",
+      "seo_setting row": "tag 'seo_setting' + the page path derived from page_key",
+      "site_setting (organization profile/logo/brand)": "tag 'site_setting' + revalidatePath('/', 'layout')"
+    },
+    "rules": [
+      "Call revalidateContent from every admin save API above.",
+      "No new infra: no polling, no websockets.",
+      "Make sure unstable_cache TTLs + page-level revalidate do not leave a stale window after a successful save; if they do, reduce page-level revalidate for tag-invalidated pages and explain why.",
+      "Goal = next request returns new content+schema. Live updating of an already-open tab is NOT required.",
+      "Cache invalidation does not save data: saving stays in the existing admin API -> Supabase."
+    ]
+  },
+  "phases": [
+    {
+      "phase": 0,
+      "name": "Audit (no code)",
+      "do": [
+        "Re-verify 'verified_audit_of_current_code': list routes, tables (read-only), grep application/ld+json, schema_json, faq_section, SeoJsonLd, ManualSeoSchema, HoistedSchema.",
+        "Check which Supabase project .env points to.",
+        "Record corrections to the audit in the final report."
+      ]
+    },
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "do": [
+        "Create src/lib/schema/**, json-ld component, revalidate.ts.",
+        "Add Vitest as devDependency + 'test' and 'typecheck' scripts.",
+        "Unit tests: serializer (</script>, <!--, U+2028), URL/date validators, ID builder, missing-field omission, @id reference checker."
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Templates and resolvers",
+      "do": [
+        "Implement every template in 'templates' for existing content types only.",
+        "Make generateMetadata use the same resolvers (title, description, canonical, OG, Twitter consistent with JSON-LD)."
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Wire pages",
+      "do": [
+        "Replace <SeoJsonLd/> + <ManualSeoSchema/> on every page with one <JsonLd/>.",
+        "Fix /in/services URL, case-study type/breadcrumb, category names, www canonical.",
+        "Remove the 'himanshu' title hack and list affected rows in the report."
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Data and admin",
+      "do": [
+        "Add organization_profile jsonb to Site Settings UI inside /admin/seo (form fields only) + typed defaults from business_profile.",
+        "Write /db-proposals/*.sql: add_organization_profile.sql, seed_organization_profile.sql, seed_keywords.sql, seed_service_faqs.sql, seed_home_faqs.sql, cleanup_schema_json.sql (move FAQ arrays out of schema_json, null hand-written JSON-LD) - all UNEXECUTED on production.",
+        "Change ai-seo-service.ts so it no longer writes FAQs into schema_json (write to the correct FAQ field).",
+        "Wire revalidateContent into all admin save APIs."
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Remove Schema Panel",
+      "do": [
+        "Delete app/admin/schema/page.tsx, app/api/admin/schema/route.ts, the nav item in app/admin/layout.tsx, the 8 role entries in lib/config/roles.ts.",
+        "Delete manual-seo-schema, seo-json-ld, hoisted-schema and getSeoJsonLd after confirming zero remaining imports.",
+        "Confirm /admin/schema returns 404."
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Test and report",
+      "do": [
+        "Run every test in 'testing'. Paste real output.",
+        "Produce the final report."
+      ]
+    }
+  ],
+  "testing": [
+    "Build: npx tsc --noEmit, next lint (changed files), next build && next start.",
+    "Route coverage: script requests every public route (sitemap + known routes + one slug of each dynamic type), extracts every <script type='application/ld+json'> from the raw HTML (curl, not React state), asserts EXACTLY 1 per page, valid JSON, @context present.",
+    "Per-type assertions: required props per template; unique @ids; every @id reference resolves; absolute https URLs; ISO-8601 dates; no localhost; no empty strings/arrays/undefined.",
+    "Data accuracy: schema name/description/url/image/dates/author equal <title>, meta description, canonical, og:* and the DB row. FAQ schema text equals the visible FAQ DOM text on that page. Check service FAQ answers are 40-60 words.",
+    "Duplicates: grep proves no SeoJsonLd / ManualSeoSchema / HoistedSchema left; no page has more than one ld+json.",
+    "Missing data fixture: no author, no dates, no image, no FAQs -> properties omitted, no crash, nothing fabricated.",
+    "Update tests (local or dev DB only): change a service title, blog title/description/image/author, case-study title, site_setting field -> call revalidation -> next request shows new value in <title>, meta and JSON-LD; hash-compare unrelated pages to prove they did not change.",
+    "Cache tests: before/after save, hard refresh, direct URL, a brand-new blog slug works with no rebuild and no code change.",
+    "Security: inject '</script><script>alert(1)</script>' and '<!--' into title/FAQ -> output stays inert; admin APIs still 403 for unauthorised roles; grep client bundles for the service-role key; /admin/schema 404.",
+    "Regression: admin login, SEO editor, blog/service/case-study editors, roles, sitemap, robots, internal linking, navigation, FaqAccordion.",
+    "External validation: Schema.org Validator and Google Rich Results Test on extracted JSON-LD (paste JSON if localhost is unreachable). State honestly: valid does not mean a rich result."
+  ],
+  "final_report": [
+    "Architecture summary",
+    "Audit corrections",
+    "Files added / changed / removed",
+    "How the generator works",
+    "Template table and field-mapping table",
+    "Revalidation matrix as implemented",
+    "Missing-data behaviour",
+    "Per-route test results with real output",
+    "Validation, security and regression results",
+    "List of /db-proposals SQL files the human must review and run",
+    "Open items (e.g. slug mismatches, geo coordinates, services missing in DB, dirty 'himanshu' rows, GSTIN-contains-PAN note, FAQ rich-result policy)",
+    "Label every item: implemented / tested / planned-only"
+  ],
+  "acceptance": [
+    "No /admin/schema page, API, nav link or role entry remains",
+    "Zero per-URL schema config; zero hardcoded page values in schema code",
+    "Shared templates exist for page, home/org/website/local, about, contact, service, collections, blog, case study, legal",
+    "Exactly one valid server-rendered JSON-LD script per page",
+    "Meta tags and JSON-LD come from the same resolved values",
+    "A new blog, service or case study works with no code change",
+    "Admin save -> next request shows updated content and schema",
+    "Safe serializer proven by test",
+    "No fabricated dates, ratings, authors, prices; no aggregateRating",
+    "Production DB and live site untouched"
+  ]
+}

@@ -1,0 +1,88 @@
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+import { verifyUserRole } from "@lib/auth-helpers"
+import { revalidateContent } from "@lib/revalidate"
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const params = await props.params
+    if (!(await verifyUserRole(req, ["admin", "manager"]))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("services")
+      .select("*")
+      .eq("slug", params.slug)
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+    return NextResponse.json(data)
+  } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  props: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const params = await props.params
+    if (!(await verifyUserRole(req, ["admin", "manager"]))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    const body = await req.json()
+    const { error } = await supabaseAdmin
+      .from("services")
+      .update({
+        title: body.title,
+        short_label: body.shortLabel,
+        description: body.description,
+        intro: body.intro,
+        image: body.image,
+        points: body.points || [],
+        outcomes: body.outcomes || [],
+        why_it_matters: body.whyItMatters || [],
+      })
+      .eq("slug", params.slug)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await revalidateContent({ type: "service", slug: params.slug })
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const params = await props.params
+    if (!(await verifyUserRole(req, ["admin", "manager"]))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    const { error } = await supabaseAdmin
+      .from("services")
+      .delete()
+      .eq("slug", params.slug)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await revalidateContent({ type: "service", slug: params.slug })
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  }
+}

@@ -1,0 +1,1257 @@
+{
+  "name": "mommantum supabase",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6ee08793-f784-493f-99a2-464c2ab06ddd",
+      "name": "When clicking Execute workflow"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YRKNqZCiGw7svT3t_Jze4KHxxyKkFIntB_-qOGuv-3M",
+          "mode": "list",
+          "cachedResultName": "mommantum_blog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YRKNqZCiGw7svT3t_Jze4KHxxyKkFIntB_-qOGuv-3M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YRKNqZCiGw7svT3t_Jze4KHxxyKkFIntB_-qOGuv-3M/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "5f5f0c8e-0183-4e3f-9063-a5aec31d67c8",
+      "name": "Get rows from sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a2gtVZv2FBk9jGC7",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (!items.length) return [];\nconst keys = Object.keys(items[0].json);\nconst findKey = (name) => keys.find(k => k.trim().toLowerCase() === name.toLowerCase());\nconst STATUS_KEY = findKey('status') || findKey('status ');\nconst KEYWORD_KEY = findKey('keywords');\nconst COMPANY_KEY = findKey('company');\nconst COMP_DESC_KEY = findKey('company_description');\nconst EXT_KEY = findKey('external links') || findKey('external_links');\nconst SIM_KEY = findKey('similar links') || findKey('similar_links');\nconst TOPIC_KEY = findKey('topic');\nconst LOGO_KEY = findKey('logo_url');\nconst MUSTARD_KEY = findKey('mustard_oil_url');\nconst GROUNDNUT_KEY = findKey('groundnut_oil_url');\nconst A2_GHEE_KEY = findKey('a2_bilona_cow_ghee_url');\nconst DESI_GHEE_KEY = findKey('desi_cow_ghee_url');\nconst WALNUTS_KEY = findKey('walnuts_url');\nconst ALMONDS_KEY = findKey('almonds_url');\nconst JAGGERY_KEY = findKey('jaggery_powder_url');\nif (!STATUS_KEY || !KEYWORD_KEY) throw new Error('Status or Keywords column not found. Keys: ' + keys.join(', '));\nconst clean = (v) => String(v||'').trim();\nconst pending = items.filter(i => clean(i.json[STATUS_KEY]).toLowerCase() === 'pending');\nif (!pending.length) return [];\nconst batch = pending.slice(0, 5);\nconst pkw = batch[0].json;\nconst allPairs = batch.map(row => ({\n  keyword: clean(row.json[KEYWORD_KEY]),\n  similarLink: clean(row.json[SIM_KEY])\n}));\nconst pkwKeyword = allPairs[0].keyword;\nconst pkwLink = clean(pkw[EXT_KEY]) || allPairs[0].similarLink;\nconst skwPairs = allPairs.slice(1).filter(p => p.keyword);\nconst topic = clean(pkw[TOPIC_KEY]);\nreturn [{ json: {\n  primary_keyword: pkwKeyword,\n  primary_link: pkwLink,\n  secondary_keywords: skwPairs.map(p => p.keyword),\n  skwLinkPairs: skwPairs,\n  topic: topic,\n  company: clean(pkw[COMPANY_KEY]),\n  description: clean(pkw[COMP_DESC_KEY]),\n  all_keywords: [pkwKeyword, ...skwPairs.map(p=>p.keyword)],\n  logo_url: clean(pkw[LOGO_KEY]),\n  mustard_oil_url: clean(pkw[MUSTARD_KEY]),\n  groundnut_oil_url: clean(pkw[GROUNDNUT_KEY]),\n  a2_bilona_cow_ghee_url: clean(pkw[A2_GHEE_KEY]),\n  desi_cow_ghee_url: clean(pkw[DESI_GHEE_KEY]),\n  walnuts_url: clean(pkw[WALNUTS_KEY]),\n  almonds_url: clean(pkw[ALMONDS_KEY]),\n  jaggery_powder_url: clean(pkw[JAGGERY_KEY])\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "79d26501-db23-4ed7-a881-3b5ee666b2b2",
+      "name": "Select Pending Batch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "fafec5a5bb80523c3c009a18c50ceb5e2d975565"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"q\": \"{{$json.primary_keyword}} benefits guide\", \"num\": 5, \"gl\": \"in\", \"hl\": \"en\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        720,
+        0
+      ],
+      "id": "be3b42ef-6982-481f-85f2-83a33a3cad62",
+      "name": "Serper Search 1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "fafec5a5bb80523c3c009a18c50ceb5e2d975565"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"q\": \"{{$items('Select Pending Batch')[0].json.primary_keyword}} uses cooking\", \"num\": 5, \"gl\": \"in\", \"hl\": \"en\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        960,
+        0
+      ],
+      "id": "32fb034d-f785-4864-946e-25b11d692cbc",
+      "name": "Serper Search 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const search1 = $items('Serper Search 1')[0]?.json || {};\nconst search2 = $items('Serper Search 2')[0]?.json || {};\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst extractContext = (results) => {\n  return (results?.organic || []).slice(0, 5).map(r => ({\n    title: String(r.title || '').trim(),\n    snippet: String(r.snippet || '').trim()\n  }));\n};\nconst context1 = extractContext(search1);\nconst context2 = extractContext(search2);\nconst allContext = [...context1, ...context2];\nconst contextText = allContext.map((r, i) =>\n  `Result ${i+1}:\\nTitle: ${r.title}\\nSnippet: ${r.snippet}`\n).join('\\n\\n');\nconst prompt = `You are an SEO content strategist. Based on the search results below, generate exactly 2 strong H2 section headings for a blog post.\\n\\nBLOG TOPIC: ${batchData.topic}\\nPRIMARY KEYWORD: ${batchData.primary_keyword}\\nSECONDARY KEYWORDS: ${(batchData.secondary_keywords||[]).join(', ')}\\n\\nSEARCH RESULTS FROM GOOGLE:\\n${contextText}\\n\\nRULES FOR H2 HEADINGS:\\n- Must be specific and descriptive (not generic)\\n- Must naturally include the primary keyword or a secondary keyword\\n- Must represent a real section of content (not a page title)\\n- NO brand names (no Healthline, WebMD, Amazon, Patanjali, Delight Farms etc)\\n- NO numbers like \"8 Benefits\" at the start\\n- Each heading 6-12 words long\\n- Should cover different aspects of the topic\\n- Think like: what are the 2 most important things readers want to know?\\n\\nRespond ONLY in JSON:\\n{\\n  \"h2_hints\": [\"First H2 heading here\", \"Second H2 heading here\"]\\n}`;\nreturn [{ json: { ...batchData, h2_generation_prompt: prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "dc3f23ae-eed6-40c7-9410-33572db5ffc6",
+      "name": "Prepare Search Context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.h2_generation_prompt}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "cbee557d-5907-45bb-aaf6-5f9c49056d99",
+      "name": "Generate H2 Hints AI"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        224
+      ],
+      "id": "320e9cc0-5a35-4c02-953e-f840ec38a360",
+      "name": "GPT-4.1-mini (H2 Generator)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst batchData = $items('Prepare Search Context')[0]?.json || {};\nlet h2Hints = [];\ntry {\n  let raw = String(item.output || item.text || '');\n  raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    const parsed = JSON.parse(match[0]);\n    h2Hints = parsed.h2_hints || [];\n  }\n} catch(e) { h2Hints = []; }\nif (h2Hints.length === 0) h2Hints.push('Health Benefits of ' + batchData.primary_keyword.charAt(0).toUpperCase() + batchData.primary_keyword.slice(1));\nif (h2Hints.length === 1) h2Hints.push('How to Use ' + batchData.primary_keyword.charAt(0).toUpperCase() + batchData.primary_keyword.slice(1) + ' Every Day');\nreturn [{ json: { ...batchData, h2Hints } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ],
+      "id": "5f941063-5fb1-4ede-a363-34191e0a6897",
+      "name": "Parse H2 Hints"
+    },
+    {
+      "parameters": {
+        "url": "=https://answer-the-public1.p.rapidapi.com/answer-the-public?keyword={{encodeURIComponent($json[\"primary_keyword\"])}}&country=us",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-host",
+              "value": "answer-the-public1.p.rapidapi.com"
+            },
+            {
+              "name": "x-rapidapi-key",
+              "value": "02b001b3e3msh5a9f6e3bb7ed5edp1d666fjsn119f61983d4d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "8af8226a-375a-40c7-855e-bc143cbab65d",
+      "name": "Answer The Public (FAQs)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst batchData = $items('Parse H2 Hints')[0]?.json || {};\nconst extractQuestions = (data) => {\n  const questions = [];\n  try {\n    const qs = data?.questions || data?.data?.questions || {};\n    const preps = data?.prepositions || data?.data?.prepositions || {};\n    const wh = ['who','what','where','how','why','when','which','will','can','are','is'];\n    for (const w of wh) { const arr = qs[w] || []; if (Array.isArray(arr)) arr.slice(0,2).forEach(q => { if(q && String(q).length > 15) questions.push(String(q).trim()); }); }\n    const prepWords = ['for','with','without','near','to','can','vs'];\n    for (const p of prepWords) { const arr = preps[p] || []; if (Array.isArray(arr)) arr.slice(0,1).forEach(q => { if(q && String(q).length > 15) questions.push(String(q).trim()); }); }\n    if (!questions.length) { const flat = data?.questions || data?.data || []; if (Array.isArray(flat)) flat.slice(0,10).forEach(q => { const txt = q?.query || q?.question || q?.text || String(q); if (txt && txt.length > 15) questions.push(txt.trim()); }); }\n  } catch(e) {}\n  return [...new Set(questions.filter(Boolean))].slice(0, 10);\n};\nreturn [{ json: { ...batchData, faqs: extractQuestions(item) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ],
+      "id": "a3e545cc-c1fa-4a5c-91f7-eff179201cf9",
+      "name": "Parse FAQ Questions"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior content researcher. Find REAL SPECIFIC VERIFIED facts.\n\nBLOG TOPIC: {{$json.topic}}\nPRIMARY KEYWORD: {{$json.primary_keyword}}\nSECONDARY KEYWORDS: {{$json.secondary_keywords.join(', ')}}\nCOMPANY: {{$json.company}}\nDESCRIPTION: {{$json.description}}\n\nTasks:\n1. Find 12-15 specific facts with numbers, percentages, studies about this topic\n2. Identify target audience\n3. Identify niche\n4. Suggest best writing tone\n5. List 3-5 common misconceptions\n6. List 3-5 practical use cases\n7. Suggest a POWER NUMBER for H1 title. Count the ACTUAL distinct points in your key_facts above. Pick any number between 4 and 10 that best matches the actual number of distinct points you found. Do NOT default to 7 or 9 every time \u2014 vary it based on real content. If you found 5 distinct points pick 5. If 6 pick 6. If 8 pick 8. If 10 pick 10. Every blog topic is different so the number must reflect the actual content depth.\n\nRespond ONLY in JSON (no markdown):\n{\n  \"niche\": \"...\",\n  \"target_audience\": \"...\",\n  \"tone\": \"...\",\n  \"search_intent\": \"...\",\n  \"power_number\": 7,\n  \"key_facts\": [\"fact1\", ...],\n  \"misconceptions\": [\"...\", ...],\n  \"use_cases\": [\"...\", ...]\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2400,
+        0
+      ],
+      "id": "d961eeb4-1534-4445-a15f-1b15b2eb6671",
+      "name": "Research AI"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2400,
+        224
+      ],
+      "id": "95e97968-a733-4347-a9a9-6bf0553ea724",
+      "name": "GPT-4.1-mini (Research)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet research = {};\ntry {\n  let raw = String(item.output || item.text || '');\n  raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  if (match) research = JSON.parse(match[0]);\n} catch(e) { research = {}; }\nconst batchData = $items('Parse FAQ Questions')[0]?.json || {};\nreturn [{ json: {\n  ...batchData,\n  niche: research.niche || 'general',\n  target_audience: research.target_audience || 'general audience',\n  tone: research.tone || 'friendly and informative',\n  search_intent: research.search_intent || '',\n  power_number: research.power_number || 7,\n  key_facts: research.key_facts || [],\n  misconceptions: research.misconceptions || [],\n  use_cases: research.use_cases || []\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "id": "fdd06997-60aa-4ebc-a608-dc6870db7a0b",
+      "name": "Parse Research Output"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional SEO Specialist and blog outline architect.\n\nBLOG TOPIC: {{$json.topic}}\nPRIMARY KEYWORD: {{$json.primary_keyword}}\nSECONDARY KEYWORDS: {{$json.secondary_keywords.join(', ')}}\nNICHE: {{$json.niche}}\nAUDIENCE: {{$json.target_audience}}\nTONE: {{$json.tone}}\nPOWER NUMBER: {{$json.power_number}}\nCOMPANY: {{$json.company}}\nKEY FACTS: {{$json.key_facts.join('\\n')}}\n\nH2 HINTS FROM RESEARCH (use these first, create remaining to make 4 total):\n{{$json.h2Hints.join('\\n')}}\n\nCreate exactly 4 H2 headings total:\n- Use the H2 hints first (keep them as provided)\n- Create remaining H2s yourself to complete 4\n- All H2s must be SEO optimized with primary or secondary keywords\n- Flow logically, do NOT include conclusion or summary\n\nFor EACH H2 provide:\n- Exact H2 text\n- Exactly 2 H3 subheadings\n- 3-4 specific talking points per H3 with real data\n- One real world example\n- 3-4 topic tags (short 1-3 word tags)\n- crux: 4-5 word phrase summarizing this section\n\nAlso provide:\n- h1_title: include primary keyword naturally in a compelling way, max 70 chars \u2014 DO      NOT start with a number, no power number in title\n- key_takeaways: 5-6 actionable points\n- featured_tagline: 5-6 word catchy tagline (no special characters or quotes)\n- conclusion_angle\n- blog_conclusion: Write 3 short paragraphs. Paragraph 1: summarize the main benefit of this product. Paragraph 2: connect to reader daily life and health. Paragraph 3: soft mention of company with call to action. Simple conversational tone. No em dashes. Max 20 words per sentence.\n\nRespond ONLY in JSON:\n{\n  \"h1_title\": \"...\",\n  \"intro_hook\": \"...\",\n  \"key_takeaways\": [\"...\"],\n  \"featured_tagline\": \"...\",\n  \"sections\": [\n    {\n      \"h2\": \"exact heading\",\n      \"h3s\": [\"subheading 1\", \"subheading 2\"],\n      \"talking_points\": [\"...\"],\n      \"example\": \"...\",\n      \"tags\": [\"tag1\", \"tag2\", \"tag3\"],\n      \"crux\": \"4-5 word crux\"\n    }\n  ],\n  \"conclusion_angle\": \"...\",\n  \"blog_conclusion\": \"...\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2880,
+        0
+      ],
+      "id": "a2352818-da90-49d9-b1b4-9b57ae653014",
+      "name": "Outline AI"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2880,
+        224
+      ],
+      "id": "7f0375b7-68fa-4622-adce-ad36fb5e437f",
+      "name": "GPT-4.1-mini (Outline)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet outline = {};\ntry {\n  let raw = String(item.output || item.text || '');\n  raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  if (match) outline = JSON.parse(match[0]);\n} catch(e) { outline = {}; }\nconst rd = $items('Parse Research Output')[0]?.json || {};\nconst makeSlug = (s) => String(s).toLowerCase().replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-').slice(0,70);\nconst sections = outline.sections || [];\nconst h2s = sections.map(s => s.h2).filter(Boolean);\nconst now = new Date();\nconst publishDate = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });\nconst readTime = Math.max(6, Math.round(((h2s.length * 300) + 800) / 200));\n\n// Build TOC with H3 sub-items\nconst tocItems = [];\nsections.forEach((s, i) => {\n  const h2Num = (i + 1);\n  tocItems.push('<li><a href=\"#' + makeSlug(s.h2) + '\">' + s.h2 + '</a>');\n  if (s.h3s && s.h3s.length) {\n    tocItems.push('<ol class=\"toc-sub\">');\n    s.h3s.forEach((h3, j) => {\n      const h3Num = h2Num + '.' + (j + 1);\n      tocItems.push('<li><span class=\"toc-num\">' + h3Num + '</span><a href=\"#' + makeSlug(h3) + '\">' + h3 + '</a></li>');\n    });\n    tocItems.push('</ol>');\n  }\n  tocItems.push('</li>');\n});\n\nconst tocHtml = '<nav class=\"toc\" role=\"navigation\">\\n<h2>Table of Contents</h2>\\n<ol>\\n' +\n  tocItems.join('\\n') +\n  '\\n<li><a href=\"#faq\">Frequently Asked Questions</a></li>\\n</ol>\\n</nav>';\n\nreturn [{ json: {\n  ...rd,\n  outline, h2s, sections, tocHtml, publishDate, readTime,\n  h1_title: outline.h1_title || rd.primary_keyword,\n  featured_tagline: outline.featured_tagline || 'Pure Natural Traditional',\n  key_takeaways: outline.key_takeaways || [],\n  conclusion_angle: outline.conclusion_angle || '',\n  blog_conclusion: outline.blog_conclusion || ''\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        0
+      ],
+      "id": "80a2a0f7-7244-4845-93f1-dadc765fcee7",
+      "name": "Parse Outline + Build Structure"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst skwString = (d.secondary_keywords || []).join(', ');\nconst factsString = (d.key_facts || []).join('\\n');\nconst outlineStr = JSON.stringify(d.outline || {}, null, 2);\nconst faqString = (d.faqs || []).length ? (d.faqs||[]).map((q,i)=>`${i+1}. ${q}`).join('\\n') : 'Create 7-8 highly relevant FAQs yourself';\nconst sections = d.sections || [];\nconst sectionTagsInfo = sections.map((s,i) => `Section ${i} (${s.h2}) tags: ${(s.tags||[]).join(', ')}`).join('\\n');\nconst skwLinks = (d.skwLinkPairs || []).filter(p=>p.similarLink).map(p =>\n  '<a href=\"' + p.similarLink + '\" class=\"kw-link\" rel=\"noopener\">' + p.keyword + '</a>'\n).join('\\n');\n\nconst allKeywords = [\n  { kw: d.primary_keyword, url: d.primary_link },\n  ...(d.skwLinkPairs || []).filter(p => p.similarLink).map(p => ({ kw: p.keyword, url: p.similarLink }))\n];\nconst kwMapStr = allKeywords.map(k => '\"' + k.kw + '\" -> ' + k.url).join('\\n');\nconst mandatoryLinks = allKeywords.map(k =>\n  '\"' + k.kw + '\" \u2192 <a href=\"' + k.url + '\" class=\"kw-link\" rel=\"noopener\">' + k.kw + '</a>'\n).join('\\n');\n\nconst css = [\n  '<style>',\n  '  .blog-wrap{max-width:900px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;}',\n  '  .blog-wrap h2{font-size:1.6em;font-weight:700;margin:36px 0 10px;color:#1a1a1a;border-left:4px solid #4A1F18;padding-left:12px;}',\n  '  .blog-wrap h3{font-size:1.2em;font-weight:600;margin:24px 0 8px;color:#2c3e50;}',\n  '  .blog-wrap p{margin:0 0 16px;line-height:1.8;font-size:1.05em;}',\n  '  .blog-wrap ul,.blog-wrap ol{margin:0 0 16px 24px;line-height:1.8;}',\n  '  .blog-wrap li{margin:8px 0;}',\n  '  .blog-meta{display:flex;gap:20px;font-size:0.85em;color:#888;margin:8px 0 28px;padding-bottom:16px;border-bottom:1px solid #eee;flex-wrap:wrap;}',\n  '  .blog-img{width:100%;height:auto;border-radius:10px;margin:0 0 32px;display:block;object-fit:cover;aspect-ratio:16/9;}',\n  '  .toc{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px 28px;margin:24px 0;max-width:640px;}',\n  '  .toc h2{font-size:1em;font-weight:700;margin:0 0 10px;color:#374151;border:none;padding:0;}',\n  '  .toc ol{margin:0 0 0 18px;padding:0;}',\n  '  .toc-sub{margin:4px 0 4px 16px;padding:0;list-style:none;}',\n  '  .toc a{color:#2563eb;text-decoration:none;font-size:0.97em;}',\n  '  .toc-sub a{font-size:0.9em;color:#4b5563;}',\n  '  .toc-num{font-size:0.9em;color:#6b7280;margin-right:6px;min-width:28px;display:inline-block;}',\n  '  .toc a:hover{text-decoration:underline;}',\n  '  .key-takeaways{background:#EEE6DA;border-left:5px solid #4A1F18;border-radius:8px;padding:20px 24px;margin:28px 0;}',\n  '  .key-takeaways h3{color:#4A1F18;margin:0 0 12px;font-size:1.1em;}',\n  '  .key-takeaways ul{margin:0 0 0 18px;}',\n  '  .key-takeaways li{margin:6px 0;color:#4A1F18;}',\n  '  .expert-tip{background:#fefce8;border-left:5px solid #eab308;border-radius:8px;padding:18px 22px;margin:24px 0;}',\n  '  .expert-tip strong{color:#854d0e;}',\n  '  .checklist{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px 24px;margin:24px 0;}',\n  '  .checklist h3{color:#166534;margin:0 0 12px;}',\n  '  .checklist li{list-style:none;padding-left:4px;}',\n  \"  .checklist li::before{content:'\u2713 ';color:#16a34a;font-weight:700;}\",\n  '  .kw-link{color:#2563eb;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:600;}',\n  '  .topic-tag{display:inline-block;background:#EEE6DA;color:#4A1F18;font-size:0.78em;font-weight:600;padding:3px 10px;border-radius:20px;margin:0 4px 4px 0;}',\n  '  .tags-row{margin:12px 0 20px;display:flex;flex-wrap:wrap;gap:4px;}',\n  '  .faq-section{max-width:860px;margin:36px auto 0;}',\n  '  .faq-section>h2{font-size:1.5em;margin-bottom:18px;}',\n  '  .faq-section details{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.05);}',\n  '  .faq-section summary{padding:16px 20px;background:#f9fafb;cursor:pointer;font-weight:600;font-size:1em;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;border-radius:8px;}',\n  '  .faq-section summary::-webkit-details-marker{display:none;}',\n  \"  .faq-section summary::after{content:'\u25bc';font-size:0.75em;color:#6b7280;}\",\n  '  .faq-section details[open] summary{border-radius:8px 8px 0 0;border-bottom:1px solid #e5e7eb;}',\n  '  .faq-section details[open] summary::after{transform:rotate(180deg);}',\n  '  .faq-section details p{padding:16px 20px;margin:0;background:#fff;color:#374151;line-height:1.75;}',\n  '  @media (max-width: 768px) {',\n  '    .blog-wrap{font-size:15px;}',\n  '    .blog-wrap h2{font-size:1.3em;margin:22px 0 8px;padding-left:10px;}',\n  '    .blog-wrap h3{font-size:1.1em;margin:16px 0 6px;}',\n  '    .blog-wrap p{font-size:1em;line-height:1.72;margin:0 0 13px;}',\n  '    .blog-wrap ul,.blog-wrap ol{margin:0 0 12px 18px;}',\n  '    .blog-wrap li{margin:6px 0;}',\n  '    .blog-meta{font-size:0.8em;gap:10px;margin:7px 0 22px;padding-bottom:13px;}',\n  '    .blog-img{margin:0 0 22px;border-radius:8px;}',\n  '    .toc{padding:14px 16px;margin:18px 0;}',\n  '    .toc h2{font-size:0.95em;margin:0 0 8px;}',\n  '    .toc a{font-size:0.88em;}',\n  '    .toc-sub a{font-size:0.82em;}',\n  '    .toc-num{font-size:0.82em;min-width:24px;}',\n  '    .key-takeaways{padding:14px 16px;margin:22px 0;}',\n  '    .key-takeaways h3{font-size:1em;margin:0 0 9px;}',\n  '    .key-takeaways li{font-size:0.97em;margin:5px 0;}',\n  '    .expert-tip{padding:12px 16px;font-size:0.97em;margin:18px 0;}',\n  '    .checklist{padding:14px 16px;margin:18px 0;}',\n  '    .checklist h3{font-size:1em;}',\n  '    .checklist li{font-size:0.97em;}',\n  '    .faq-section{margin:26px auto 0;}',\n  '    .faq-section>h2{font-size:1.3em;margin-bottom:14px;}',\n  '    .faq-section summary{font-size:0.95em;padding:12px 16px;}',\n  '    .faq-section details p{font-size:0.95em;padding:12px 16px;line-height:1.68;}',\n  '    .topic-tag{font-size:0.72em;padding:2px 8px;}',\n  '    .tags-row{margin:9px 0 14px;gap:3px;}',\n  '  }',\n  '  @media (max-width: 480px) {',\n  '    .blog-wrap{font-size:14px;}',\n  '    .blog-wrap h2{font-size:1.25em !important;margin:18px 0 6px;padding-left:9px;border-left-width:3px;}',\n  '    .blog-wrap h3{font-size:1.05em !important;margin:13px 0 5px;}',\n  '    .blog-wrap p{font-size:0.97em !important;line-height:1.68;margin:0 0 11px;}',\n  '    .blog-wrap ul,.blog-wrap ol{font-size:0.97em;margin:0 0 10px 15px;}',\n  '    .blog-wrap li{margin:5px 0;}',\n  '    .blog-meta{font-size:0.78em !important;gap:7px;margin:5px 0 18px;padding-bottom:11px;}',\n  '    .blog-img{margin:0 0 18px;border-radius:7px;}',\n  '    .toc{padding:11px 13px;margin:14px 0;border-radius:8px;}',\n  '    .toc h2{font-size:0.9em !important;margin:0 0 7px;}',\n  '    .toc a{font-size:0.82em !important;}',\n  '    .toc-sub{margin:3px 0 3px 13px;}',\n  '    .toc-sub a{font-size:0.78em !important;}',\n  '    .toc-num{font-size:0.78em !important;min-width:22px;margin-right:5px;}',\n  '    .key-takeaways{padding:11px 13px;margin:18px 0;}',\n  '    .key-takeaways h3{font-size:0.95em;margin:0 0 7px;}',\n  '    .key-takeaways li{font-size:0.93em;margin:4px 0;}',\n  '    .expert-tip{padding:10px 13px;font-size:0.93em;margin:14px 0;}',\n  '    .checklist{padding:11px 13px;margin:14px 0;}',\n  '    .checklist h3{font-size:0.95em;margin:0 0 7px;}',\n  '    .checklist li{font-size:0.93em;}',\n  '    .faq-section{margin:20px auto 0;}',\n  '    .faq-section>h2{font-size:1.15em;margin-bottom:11px;}',\n  '    .faq-section details{margin-bottom:8px;border-radius:7px;}',\n  '    .faq-section summary{font-size:0.9em !important;padding:10px 13px;}',\n  '    .faq-section details p{font-size:0.9em !important;padding:10px 13px;line-height:1.65;}',\n  '    .topic-tag{font-size:0.68em !important;padding:2px 7px;border-radius:14px;}',\n  '    .tags-row{margin:6px 0 11px;gap:3px;}',\n  '  }',\n  '</style>'\n].join('\\n');\n\nconst prompt = [\n  'You are a professional SEO Specialist and blog writer. Write a complete, deeply informative blog post in clean HTML using only body content without html or head tags.',\n  '',\n  'BLOG TOPIC: ' + d.topic,\n  'PRIMARY KEYWORD: ' + d.primary_keyword,\n  'SECONDARY KEYWORDS: ' + skwString,\n  'NICHE: ' + d.niche,\n  'AUDIENCE: ' + d.target_audience,\n  'TONE: ' + d.tone,\n  'COMPANY: ' + d.company,\n  'COMPANY DESCRIPTION: ' + d.description,\n  'PUBLISH DATE: ' + d.publishDate,\n  'READ TIME: ' + d.readTime + ' min read',\n  'H1 TITLE: ' + d.h1_title,\n  'DO NOT include H1 tag in the HTML \u2014 Shopify adds the title automatically.',\n  '',\n  'KEY FACTS:',\n  factsString,\n  '',\n  'OUTLINE:',\n  outlineStr,\n  '',\n  'SECTION TAGS:',\n  sectionTagsInfo,\n  '',\n  'STRICT HTML STRUCTURE:',\n  '',\n  '1. CSS BLOCK:',\n  css,\n  '',\n  '2. <div class=\"blog-wrap\">',\n  '',\n  '3. FEATURED IMAGE:',\n  '!!! CRITICAL: Use EXACTLY this string as src. DO NOT change it !!!',\n  '<img src=\"FEATURED_IMAGE_URL\" alt=\"' + d.primary_keyword + ' - ' + d.company + '\" title=\"' + d.h1_title + ' | ' + d.company + '\" class=\"blog-img\">',\n  '',\n  '4. BLOG META:',\n  '<div class=\"blog-meta\"><span>' + d.publishDate + '</span><span>By Arvind Kumar Sharma</span><span>' + d.readTime + ' min read</span></div>',\n  '',\n  '5. TABLE OF CONTENTS \u2014 use this EXACTLY as provided:',\n  d.tocHtml,\n  '',\n  '6. INTRO: 2-3 paragraphs. Mention ' + d.company + ' naturally once. One surprising stat. Primary keyword used naturally. Secondary keywords woven in. End with learning outcomes list.',\n  '',\n  '7. KEY TAKEAWAYS:',\n  '<div class=\"key-takeaways\"><h3>Key Takeaways</h3><ul>[5-6 points]</ul></div>',\n  '',\n  '8. FOR EACH OF 4 H2 SECTIONS:',\n  '',\n  '!!! CRITICAL IMAGE RULE !!!',\n  'Place image ABOVE each H2. Use ONLY these exact placeholder strings as src:',\n  '- Section 0: <img src=\"SECTION_IMAGE_0_URL\" alt=\"[8-12 word description]\" title=\"[H2] | ' + d.company + '\" class=\"blog-img\" loading=\"lazy\">',\n  '- Section 1: <img src=\"SECTION_IMAGE_1_URL\" alt=\"[8-12 word description]\" title=\"[H2] | ' + d.company + '\" class=\"blog-img\" loading=\"lazy\">',\n  '- Section 2: <img src=\"SECTION_IMAGE_2_URL\" alt=\"[8-12 word description]\" title=\"[H2] | ' + d.company + '\" class=\"blog-img\" loading=\"lazy\">',\n  '- Section 3: <img src=\"SECTION_IMAGE_3_URL\" alt=\"[8-12 word description]\" title=\"[H2] | ' + d.company + '\" class=\"blog-img\" loading=\"lazy\">',\n  '',\n 'H2 with id slug. H3 with id slug too.',\n'Topic tags row immediately after H2.',\n'2 H3s each with 2-3 paragraphs. Real facts with numbers.',\n'Expert tip box max 2 sections total. Checklist once.',\n'',\n'=== KEYWORD LINK MAP ===',\nkwMapStr,\n'',\n'=== HEADING KEYWORD LINK RULE \u2014 MANDATORY ===',\n'When writing H2 and H3 headings, if any keyword from the KEYWORD LINK MAP appears inside the heading text:',\n'- Link ONLY that keyword word/phrase inside the heading',\n'- Do NOT link the entire heading',\n'- Use class=\"kw-link\" on the anchor',\n'- Each keyword linked ONCE across ALL headings total \u2014 do not repeat links',\n'EXAMPLE:',\n'  H2 contains \"kashmiri walnuts\":',\n'  Write as: <h2 id=\"slug\">Health Benefits of <a href=\"url\" class=\"kw-link\" rel=\"noopener\">Kashmiri Walnuts</a> for Heart</h2>',\n'',\n'=== MANDATORY PARAGRAPH LINKING RULE ===',\n'You MUST include ALL of these exact anchor tags in paragraph text on first occurrence:',\n'',\nmandatoryLinks,\n'',\n'- Primary keyword link MUST appear in first or second paragraph',\n'- Every secondary keyword MUST be linked at least once in paragraphs',\n'- If already linked in a heading do NOT link again in paragraphs',\n'- VERIFICATION: Before finishing check every link above appears in the HTML',\n'=== END LINKING RULES ===',\n  '',\n  '9. CLOSING: 2-3 paragraphs. No H2 heading. Use this exact conclusion: ' + d.blog_conclusion + ' Soft brand mention: <a href=\"https://delightfarms.in\" class=\"kw-link\">' + d.company + '</a>',\n  '',\n  '10. FAQ SECTION MANDATORY:',\n  '<div class=\"faq-section\" id=\"faq\"><h2>Frequently Asked Questions</h2>',\n  faqString,\n  '<details><summary>Question here</summary><p>4-6 line answer with secondary keywords naturally woven in.</p></details>',\n  'Write ALL questions. Do not stop early.',\n  '</div>',\n  '',\n  '11. </div>',\n  '',\n  'CONTENT RULES:',\n  '- Real specific facts with numbers',\n  '- No em dashes. Write two sentences instead.',\n  '- No bullets for 2-4 items. Write as prose.',\n  '- Always use contractions: dont isnt youll its thats',\n  '- Max 32 words per sentence',\n  '- Simple everyday English. Explain like talking to a friend over chai.',\n  '- BANNED: delve leverage utilize furthermore moreover robust seamlessly comprehensive game-changer cutting-edge paramount endeavour facilitate optimal subsequently pertaining detrimental',\n  '',\n  'Return ONLY final HTML. No markdown. No commentary. Do not stop before FAQ closing div.'\n].join('\\n');\nreturn [{ json: { ...d, writer_prompt: prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        0
+      ],
+      "id": "ac06a356-8516-4004-b2fd-d22b3444f45b",
+      "name": "Build Writer Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.writer_prompt}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3600,
+        0
+      ],
+      "id": "f4811520-7a04-4609-8671-2ed9700d9c72",
+      "name": "Writer AI (GPT-4.1)"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 16000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        3600,
+        224
+      ],
+      "id": "cfce2caf-2395-47d9-bc55-04e49b3b4c24",
+      "name": "GPT-4.1 (Writer)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst raw = String(item.output || '');\nconst cleaned = raw.replace(/^```html\\n?/,'').replace(/^```\\n?/,'').replace(/```$/,'').trim();\nconst withoutH1 = cleaned.replace(/<h1[^>]*>[\\s\\S]*?<\\/h1>/gi, '').trim();\nconst hasFaq = withoutH1.includes('id=\"faq\"') || withoutH1.includes('faq-section');\nlet html = withoutH1;\nif (!hasFaq) {\n  html = html.replace(/<\\/div>\\s*$/,'') + '\\n<div class=\"faq-section\" id=\"faq\">\\n  <h2>Frequently Asked Questions</h2>\\n  <details><summary>FAQ_PLACEHOLDER</summary><p>ANSWER_PLACEHOLDER</p></details>\\n</div>\\n</div>';\n}\nreturn [{ json: { html_draft: html, faq_was_missing: !hasFaq } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        0
+      ],
+      "id": "eeed960c-ab4d-4b3f-a033-084f51c72e4d",
+      "name": "Validate & Clean Draft"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst structureData = $items('Parse Outline + Build Structure')[0]?.json || {};\nconst banned = 'delve tapestry multifaceted leverage utilize furthermore moreover robust seamlessly comprehensive em-dashes paramount constituents endeavour facilitate optimal subsequently pertaining detrimental hence thus wherein thereof aforementioned it is imperative one must note it is worth mentioning';\nconst humanizerPrompt = [\n  'You are a human editor. Make this AI blog sound genuinely human.',\n  '',\n  'BLOG TOPIC: ' + structureData.topic,\n  'NICHE: ' + structureData.niche,\n  'AUDIENCE: ' + structureData.target_audience,\n  'TONE: ' + structureData.tone,\n  'PRIMARY KEYWORD: ' + structureData.primary_keyword,\n  'SECONDARY KEYWORDS: ' + (structureData.secondary_keywords||[]).join(', '),\n  '',\n  'FAQ STATUS: ' + (d.faq_was_missing ? 'FAQ IS MISSING. Write 7-8 new complete FAQ questions and answers. Replace all placeholder text with real content about the topic.' : 'FAQ exists. Rewrite all answers in human tone.'),\n  '',\n  'NEVER TOUCH:',\n  '- Any h1 h2 h3 tag and its text content',\n  '- Any id or class attribute',\n  '- Any href URL',\n  '- Any style block',\n  '- Any img tag attributes (src alt title loading)',\n  '- Any topic-tag span text',\n  '- blog-meta content',\n  '- Table of contents links',\n  '- Any anchor tags inside headings',\n  '',\n  'REWRITE ONLY: text inside p tags, li tags, details FAQ blocks, expert tip blocks.',\n  '',\n  'SECONDARY KEYWORDS RULE: Weave ' + (structureData.secondary_keywords||[]).join(', ') + ' naturally in every paragraph throughout.',\n  '',\n  'HOW TO WRITE:',\n  '- Write like explaining to a friend over chai. Simple. Direct. Easy.',\n  '- Use simple everyday English. If a 15 year old cannot understand it rewrite it.',\n  '- Short sentences mostly. Max 15-18 words per sentence preferred.',\n  '- Mix in 1-2 longer sentences per paragraph for flow.',\n  '- Always use contractions: dont, isnt, youll, its, thats, cant, wont',\n  '- Vary sentence starters constantly',\n  '- Use you and your throughout',\n  '- No fancy vocabulary. Replace complex words with simple ones.',\n  '- No academic tone. No medical journal style. No corporate speak.',\n  '- Sound like a knowledgeable friend not a textbook.',\n  '- FAQ answers: explain like answering a real person on WhatsApp. 4-6 lines minimum.',\n  '- End major sections with Bottom line: or Worth remembering:',\n  '',\n  'BANNED: ' + banned,\n  '',\n  'MAX SENTENCE LENGTH: 20 words. Split anything longer.',\n  '',\n  'INPUT HTML:',\n  d.html_draft,\n  '',\n  'Return ONLY complete raw HTML. No code blocks. Start with first HTML tag. End with last closing tag.'\n].join('\\n');\nreturn [{ json: { ...d, humanizer_prompt: humanizerPrompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        0
+      ],
+      "id": "7dd44afe-293b-4ff7-aaa3-8089f20cd3d4",
+      "name": "Build Humanizer Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.humanizer_prompt}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4320,
+        0
+      ],
+      "id": "b9871ee5-edd2-4605-a0c4-3a937674e1b9",
+      "name": "Humanizer AI (GPT-4.1)"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 16000,
+          "temperature": 0.85,
+          "timeout": 120000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        4320,
+        224
+      ],
+      "id": "b34f1368-ef3e-4f62-a9d8-d52ad70b4e07",
+      "name": "GPT-4.1 (Humanizer)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst structureData = $items('Parse Outline + Build Structure')[0]?.json || {};\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst humanizedHtml = String(d.output || '');\nconst cleaned = humanizedHtml.replace(/^```html\\n?/,'').replace(/^```\\n?/,'').replace(/```$/,'').trim();\nconst pkw = structureData.primary_keyword || '';\nconst h1Title = structureData.h1_title || pkw;\nconst logoUrl = batchData.logo_url || '';\nconst htmlSnippet = cleaned.slice(0, 2000);\nconst seoPrompt = [\n  'You are an SEO specialist.',\n  'PRIMARY KEYWORD: ' + pkw,\n  'SECONDARY KEYWORDS: ' + (structureData.secondary_keywords||[]).join(', '),\n  'NICHE: ' + structureData.niche,\n  'H1 TITLE: ' + h1Title,\n  'BLOG TOPIC: ' + (structureData.topic||''),\n  'BLOG SNIPPET:',\n  htmlSnippet,\n  'Generate:',\n  '1. meta_title: 50-60 chars with power number (5,7,9) and primary keyword',\n  '2. meta_description: 145-160 chars, primary + secondary keyword, call to action',\n  '3. slug: 3-6 words lowercase hyphens',\n  '4. tags: EXACTLY 5 tags 1-3 words each',\n  '5. og_title',\n  '6. og_description: 160-200 chars',\n  'Respond ONLY in JSON:',\n  '{ \"meta_title\":\"...\",\"meta_description\":\"...\",\"slug\":\"...\",\"tags\":[\"t1\",\"t2\",\"t3\",\"t4\",\"t5\"],\"og_title\":\"...\",\"og_description\":\"...\" }'\n].join('\\n');\nreturn [{ json: { humanized_html: cleaned, seo_prompt: seoPrompt, structureData, logoUrl } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4560,
+        0
+      ],
+      "id": "82003170-bfc3-4e9f-b3be-d52e0922d52e",
+      "name": "Build Image Prompts from Content"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.seo_prompt}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4800,
+        0
+      ],
+      "id": "8fcc8d8e-5d44-44f3-81b2-9d6d91574fe6",
+      "name": "SEO Meta AI"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        4800,
+        224
+      ],
+      "id": "6540c6f3-4980-4df7-8d2a-25a5d564f46a",
+      "name": "GPT-4.1-mini (SEO)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeStr(v){return String(v??'').trim();}\nconst seoItem = $input.first().json;\nconst contentData = $items('Build Image Prompts from Content')[0]?.json || {};\nlet seo = {};\ntry {\n  let raw = String(seoItem.output||seoItem.text||'');\n  raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  if(m) seo = JSON.parse(m[0]);\n} catch(e) {}\nconst timestamp = Date.now().toString().slice(-6);\nconst baseSlug = safeStr(seo.slug)||safeStr(contentData.structureData?.h1_title||'').toLowerCase().replace(/\\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,55);\nconst slug = baseSlug.replace(/-?\\d{6}$/,'')+'-'+timestamp;\nconst metaTitle = safeStr(seo.meta_title)||safeStr(contentData.structureData?.h1_title)||'';\nconst logoUrl = safeStr(contentData.logoUrl);\nreturn [{ json: { ...contentData, seo, slug, metaTitle, logoUrl }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5040,
+        0
+      ],
+      "id": "8de6fc3f-b79c-4007-b24c-f205c8c2940b",
+      "name": "Parse SEO + Build Card Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{$json.fullCombinedPrompt}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        5488,
+        0
+      ],
+      "id": "05a653a0-6500-4a3a-a051-d4a60ff8541a",
+      "name": "Generate Image Prompt AI"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        5280,
+        224
+      ],
+      "id": "8a5f3eb2-bf7c-49cb-a490-2f590db135e3",
+      "name": "GPT-4.1-mini (Image Prompt)",
+      "credentials": {
+        "openAiApi": {
+          "id": "HYzZV3KKYtgd7UgQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst prev = $items('Parse SEO + Build Card Prompt')[0]?.json || {};\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst structureData = prev.structureData || {};\nlet aiResponse = {};\ntry {\n  let raw = String(item.output || item.text || '').trim();\n  raw = raw.replace(/```json/gi,'').replace(/```/g,'').trim();\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  if (match) aiResponse = JSON.parse(match[0]);\n} catch(e) {\n  console.log('Parse error:', e.message);\n  aiResponse = {};\n}\nconst featured = aiResponse.featured || {};\nlet aiImagePrompt = featured.image_prompt || 'Minimal natural food photography scene, warm earthy tones, rustic wooden surface, soft natural side lighting, no people, no text, no bottles, DSLR quality, 16:9 landscape';\nconst featuredAlt = featured.alt_text || 'Premium natural food product on rustic wooden surface';\nconst layout = featured.layout || {\n  product_side: 'right',\n  product_top: '10%',\n  product_height: '72%',\n  text_side: 'left',\n  text_bottom: '48px',\n  text_max_width: '520px',\n  logo_corner: 'top-left'\n};\nconst sectionPrompts = aiResponse.sections || [];\nconsole.log('Featured prompt:', aiImagePrompt);\nconsole.log('Section prompts count:', sectionPrompts.length);\nconst combined = (\n  (structureData.topic || prev.topic || batchData.topic || '') + ' ' +\n  (structureData.primary_keyword || prev.primary_keyword || batchData.primary_keyword || '')\n).toLowerCase();\nlet productImageUrl = '';\nif (combined.includes('mustard')) productImageUrl = batchData.mustard_oil_url;\nelse if (combined.includes('groundnut') || combined.includes('peanut')) productImageUrl = batchData.groundnut_oil_url;\nelse if (combined.includes('a2') || combined.includes('bilona')) productImageUrl = batchData.a2_bilona_cow_ghee_url;\nelse if (combined.includes('ghee')) productImageUrl = batchData.desi_cow_ghee_url;\nelse if (combined.includes('walnut')) productImageUrl = batchData.walnuts_url;\nelse if (combined.includes('almond')) productImageUrl = batchData.almonds_url;\nelse if (combined.includes('jaggery')) productImageUrl = batchData.jaggery_powder_url;\nelse productImageUrl = batchData.desi_cow_ghee_url;\nproductImageUrl = productImageUrl || batchData.desi_cow_ghee_url || '';\nconst tagline = structureData.featured_tagline || prev.featured_tagline || batchData.primary_keyword || 'Pure Natural Traditional';\nconst logoUrl = prev.logoUrl || batchData.logo_url || '';\nconst company = structureData.company || prev.company || batchData.company || 'Delight Farms';\nconst metaTitle = prev.metaTitle || prev.seo?.meta_title || batchData.primary_keyword || '';\nreturn [{ json: {\n  ...prev,\n  aiImagePrompt,\n  featuredAlt,\n  layout,\n  sectionPrompts,\n  productImageUrl,\n  tagline,\n  logoUrl,\n  company,\n  metaTitle\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5728,
+        0
+      ],
+      "id": "445a0496-f037-4dfd-9c4c-1f9052a860e1",
+      "name": "Prep Featured Image1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const structureData = $items('Parse Outline + Build Structure')[0]?.json || {};\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst topic = batchData.topic || structureData.primary_keyword || 'Blog Draft';\nconst now = new Date().toLocaleDateString('en-IN');\nconst docTitle = topic + ' \u2014 ' + now;\nreturn [{ json: { ...structureData, docTitle, topic } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5968,
+        0
+      ],
+      "id": "e47ae24f-2c93-4b77-8dbd-ad97e928e994",
+      "name": "Prep Doc Title"
+    },
+    {
+      "parameters": {
+        "driveId": "=myDrive",
+        "folderId": "=",
+        "title": "={{$json.docTitle}}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        6208,
+        0
+      ],
+      "id": "d1330539-2df0-4ee3-a475-9907097a8c94",
+      "name": "Create Blog Doc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "JzINQTRdblcgi4KM",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const docData = $input.first().json;\nconst structureData = $items('Parse Outline + Build Structure')[0]?.json || {};\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst contentData = $items('Build Image Prompts from Content')[0]?.json || {};\nconst prepData = $items('Prep Featured Image1')[0]?.json || {};\nconst seoItem = $items('Parse SEO + Build Card Prompt')[0]?.json || {};\nconst imagePromptData = $items('Build Image Prompt Text')[0]?.json || {};\n\nconst docId = docData.id || docData.documentId || '';\nconst docUrl = 'https://docs.google.com/document/d/' + docId + '/edit';\nconsole.log('Doc ID:', docId);\n\nconst seoData = seoItem.seo || {};\nconst slug = seoItem.slug || '';\n\n// Get resolved prompts from Build Image Prompt Text node\nconst resolvedFeaturedPrompt = imagePromptData.resolvedFeaturedPrompt || '';\nconst resolvedSection0Prompt = imagePromptData.resolvedSection0Prompt || '';\nconst resolvedSection1Prompt = imagePromptData.resolvedSection1Prompt || '';\nconst resolvedSection2Prompt = imagePromptData.resolvedSection2Prompt || '';\nconst resolvedSection3Prompt = imagePromptData.resolvedSection3Prompt || '';\n\n// Get AI outputs from Prep Featured Image1 node\nconst sectionPrompts = prepData.sectionPrompts || [];\n\n// Featured image AI data (title lives inside prepData.aiImageTitle or the raw featured object)\nconst featuredAiData = prepData.featuredAiData || {};\n\n// Build image prompts section for doc\nlet imagePromptsText = '=== IMAGE PROMPTS ===\\n\\n';\n\nimagePromptsText += '\u2501\u2501\u2501\u2501 FEATURED IMAGE PROMPT \u2501\u2501\u2501\u2501\\n';\nimagePromptsText += resolvedFeaturedPrompt + '\\n\\n';\nimagePromptsText += 'AI OUTPUT \u2014 Title: '    + (featuredAiData.title      || prepData.aiImageTitle || '') + '\\n';\nimagePromptsText += 'AI OUTPUT \u2014 Prompt: '   + (prepData.aiImagePrompt    || '') + '\\n';\nimagePromptsText += 'AI OUTPUT \u2014 Alt Text: ' + (prepData.featuredAlt      || '') + '\\n\\n';\n\n[resolvedSection0Prompt, resolvedSection1Prompt, resolvedSection2Prompt, resolvedSection3Prompt].forEach((sp, i) => {\n  const sectionAiData = sectionPrompts[i] || {};\n  imagePromptsText += '\u2501\u2501\u2501\u2501 SECTION ' + i + ' IMAGE PROMPT \u2501\u2501\u2501\u2501\\n';\n  imagePromptsText += sp + '\\n\\n';\n  imagePromptsText += 'AI OUTPUT \u2014 Title: '    + (sectionAiData.title      || '') + '\\n';\n  imagePromptsText += 'AI OUTPUT \u2014 Prompt: '   + (sectionAiData.image_prompt || '') + '\\n';\n  imagePromptsText += 'AI OUTPUT \u2014 Alt Text: ' + (sectionAiData.alt_text    || '') + '\\n\\n';\n});\n\nconst h2HintsText       = (structureData.h2Hints       || []).join('\\n');\nconst keyFactsText      = (structureData.key_facts      || []).join('\\n');\nconst misconceptionsText = (structureData.misconceptions || []).join('\\n');\nconst useCasesText      = (structureData.use_cases      || []).join('\\n');\nconst takeawaysText     = (structureData.key_takeaways  || []).join('\\n');\n\nconst sectionsText = (structureData.sections || []).map((s, i) =>\n  'H2 ' + (i+1) + ': ' + s.h2 + '\\n' +\n  '  H3s: ' + (s.h3s || []).join(', ') + '\\n' +\n  '  Tags: ' + (s.tags || []).join(', ') + '\\n' +\n  '  Crux: ' + (s.crux || '')\n).join('\\n\\n');\n\nconst tagsText = (seoData.tags || []).join(', ');\n\nconst fullText = [\n  '=== ' + (structureData.h1_title || batchData.topic || 'BLOG DRAFT') + ' ===',\n  '',\n  imagePromptsText,\n  '=== H2 HINTS ===',\n  h2HintsText,\n  '',\n  '=== RESEARCH ===',\n  'Niche: '    + (structureData.niche            || ''),\n  'Audience: ' + (structureData.target_audience  || ''),\n  'Tone: '     + (structureData.tone             || ''),\n  '',\n  'Key Facts:',\n  keyFactsText,\n  '',\n  'Misconceptions:',\n  misconceptionsText,\n  '',\n  'Use Cases:',\n  useCasesText,\n  '',\n  '=== OUTLINE ===',\n  'H1 Title: '         + (structureData.h1_title        || ''),\n  'Tagline: '          + (structureData.featured_tagline || ''),\n  'Conclusion Angle: ' + (structureData.conclusion_angle || ''),\n  '',\n  'Key Takeaways:',\n  takeawaysText,\n  '',\n  'Sections:',\n  sectionsText,\n  '',\n  '=== BLOG CONCLUSION ===',\n  structureData.blog_conclusion || '',\n  '',\n  '=== SEO META ===',\n  'Meta Title: '       + (seoData.meta_title       || ''),\n  'Meta Description: ' + (seoData.meta_description || ''),\n  'Slug: '             + slug,\n  'Tags: '             + tagsText,\n  'OG Title: '         + (seoData.og_title         || ''),\n  'OG Description: '   + (seoData.og_description   || ''),\n  '',\n  '=== FULL BLOG HTML ===',\n  contentData.humanized_html || ''\n].join('\\n');\n\nreturn [{ json: {\n  docId,\n  docUrl,\n  docContent: fullText,\n  ...structureData,\n  seo: seoData,\n  slug,\n  humanizedHtml: contentData.humanized_html || ''\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6448,
+        0
+      ],
+      "id": "214e69f2-602c-467d-9c16-c30f2ccf0659",
+      "name": "Prep Doc Content"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{$json.docId}}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{$json.docContent}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        6688,
+        0
+      ],
+      "id": "ee8c963e-8047-4569-879e-3915f8477638",
+      "name": "Write All Sections to Doc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "JzINQTRdblcgi4KM",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const docData = $input.first().json;\nconst prev = $items('Prep Doc Content')[0]?.json || {};\nconsole.log('Doc URL:', prev.docUrl);\nreturn [{ json: { ...prev, docWritten: true } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6928,
+        0
+      ],
+      "id": "060c9709-d43d-4872-af36-45f1f82a1e5b",
+      "name": "Confirm Doc Written"
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeStr(v) { return String(v ?? '').trim(); }\n\nconst d = $input.first().json;\nconst seo = d.seo || {};\nconst prepData = $('Prep Featured Image1').first().json || {};\nconst sectionPrompts = prepData.sectionPrompts || [];\n\nconst title = safeStr(d.h1_title || d.primary_keyword);\nconst metaTitle = safeStr(seo.meta_title || title);\nconst metaDesc = safeStr(seo.meta_description || '');\nconst slug = safeStr(d.slug || title.toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9-]/g, ''));\nconst category = safeStr(d.topic || d.niche || 'General');\n\n// \u2500\u2500 Clean up placeholder image tags from HTML \u2500\u2500\nlet bodyHtml = safeStr(d.humanizedHtml || '');\nbodyHtml = bodyHtml.replace(\n  /<img[^>]*src=[\"']FEATURED_IMAGE_URL[\"'][^>]*>/gi,\n  '<p><em>[Featured Image \u2014 to be added]</em></p>'\n);\nsectionPrompts.forEach((s, i) => {\n  bodyHtml = bodyHtml.replace(\n    new RegExp('<img[^>]*src=[\"\\']SECTION_IMAGE_' + i + '_URL[\"\\'][^>]*>', 'gi'),\n    '<p><em>[Section ' + i + ' Image \u2014 to be added]</em></p>'\n  );\n});\nbodyHtml = bodyHtml.replace(\n  /<img[^>]*src=[\"']SECTION_IMAGE_(\\d)_URL[\"'][^>]*>/gi,\n  (match, num) => '<p><em>[Section ' + num + ' Image \u2014 to be added]</em></p>'\n);\n\n// \u2500\u2500 Extract FAQ Q&A pairs from <details> tags in HTML \u2500\u2500\nconst faqPairs = [];\nconst detailsRegex = /<details[\\s\\S]*?<summary[^>]*>([\\s\\S]*?)<\\/summary>[\\s\\S]*?<p>([\\s\\S]*?)<\\/p>[\\s\\S]*?<\\/details>/gi;\nlet fm;\nwhile ((fm = detailsRegex.exec(bodyHtml)) !== null && faqPairs.length < 10) {\n  const question = fm[1].replace(/<[^>]*>/g, '').trim();\n  const answer = fm[2].replace(/<[^>]*>/g, '').trim();\n  if (question) faqPairs.push({ question, answer });\n}\n\nif (faqPairs.length === 0) {\n  const rawFaqs = d.faqs || [];\n  rawFaqs.slice(0, 10).forEach(q => {\n    const question = safeStr(typeof q === 'string' ? q : q.question || q.q || '');\n    const answer = safeStr(typeof q === 'object' ? q.answer || q.a || '' : '');\n    if (question) faqPairs.push({ question, answer });\n  });\n}\n\nconsole.log('FAQs extracted:', faqPairs.length);\n\n// \u2500\u2500 Build Supabase row payload (matches blog_posts table columns) \u2500\u2500\nconst supabasePayload = {\n  title,\n  slug,\n  status: \"published\",\n  author_name: safeStr(d.author_name || \"Mommantum Team\"),\n  category_id: category,\n  featured_image: null,\n  image_urls: [],\n  excerpt: metaDesc.slice(0, 300) || safeStr(d.intro_hook || title),\n  content: bodyHtml,\n  meta_title: metaTitle,\n  meta_description: metaDesc,\n  faqs: faqPairs,\n  published_at: new Date().toISOString()\n};\n\nconsole.log('Title:', title);\nconsole.log('Slug:', slug);\nconsole.log('Category:', category);\n\nreturn [{ json: { ...d, supabasePayload } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7168,
+        0
+      ],
+      "id": "d6f4aab0-2543-4d8b-b2b5-51c07da33e96",
+      "name": "Build Supabase Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mommantum.com/api/blog/publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer mommantum-n8n-secret-2025"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.supabasePayload }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        7424,
+        16
+      ],
+      "id": "687fe496-91c5-4384-be38-09a5ab686666",
+      "name": "Publish to Next.js API"
+    },
+    {
+      "parameters": {
+        "jsCode": "const supabaseResponse = $input.first().json;\nconst prev = $('Confirm Doc Written').first().json || {};\nconst batchData = $('Select Pending Batch').first().json || {};\n\n// Supabase REST API (Prefer: return=representation) returns an array of inserted rows\nconst post = Array.isArray(supabaseResponse) ? (supabaseResponse[0] || {}) : (supabaseResponse.post || supabaseResponse || {});\nconst postId = String(post.id || 'unknown');\nconst postSlug = String(post.slug || '');\nconst postUrl = 'https://mommantum.com/blog/' + postSlug;\n\nconst exactKeyword = batchData.primary_keyword || '';\n\nconsole.log('Exact keyword for sheet update:', exactKeyword);\nconsole.log('Published post ID:', postId);\nconsole.log('Post URL:', postUrl);\n\nreturn [{ json: {\n  Keywords: exactKeyword,\n  'Status ': 'done',\n  post_id: postId,\n  post_url: postUrl,\n  doc_url: prev.docUrl || '',\n  completed_at: new Date().toISOString()\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7648,
+        0
+      ],
+      "id": "202c1814-4302-4bb3-a695-ae9d3251a945",
+      "name": "Prepare Sheet Update"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1hDF_dnxzTZ4lDYtygOco_5eyHg0oO1GBaQ2Qwsvp7rY",
+          "mode": "list",
+          "cachedResultName": "delight_blog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Keywords": "={{$json.Keywords}}",
+            "Status ": "={{$json['Status ']}}"
+          },
+          "matchingColumns": [
+            "Keywords"
+          ],
+          "schema": [
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        7888,
+        0
+      ],
+      "id": "6d5841de-6279-4f02-ad59-1d83cdc96b9d",
+      "name": "Mark as Done in Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OAqmPFIdbaT9bo6w",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst batchData = $items('Select Pending Batch')[0]?.json || {};\nconst structureData = d.structureData || {};\nconst company = batchData.company || '';\nconst topic = batchData.topic || batchData.primary_keyword || '';\nconst primaryKeyword = batchData.primary_keyword || '';\nconst metaTitle = d.metaTitle || d.seo?.meta_title || primaryKeyword;\nconst blogConclusion = structureData.blog_conclusion || d.blog_conclusion || '';\nconst h2sText = structureData.h2s ? structureData.h2s.join(' | ') : '';\nconst sections = structureData.sections || [];\nconst logoUrl = batchData.logo_url || '';\n\n// Pick product image URL based on keyword\nconst combined = (topic + ' ' + primaryKeyword).toLowerCase();\nlet productImageUrl = '';\nif (combined.includes('mustard')) productImageUrl = batchData.mustard_oil_url;\nelse if (combined.includes('groundnut') || combined.includes('peanut')) productImageUrl = batchData.groundnut_oil_url;\nelse if (combined.includes('a2') || combined.includes('bilona')) productImageUrl = batchData.a2_bilona_cow_ghee_url;\nelse if (combined.includes('ghee')) productImageUrl = batchData.desi_cow_ghee_url;\nelse if (combined.includes('walnut')) productImageUrl = batchData.walnuts_url;\nelse if (combined.includes('almond')) productImageUrl = batchData.almonds_url;\nelse if (combined.includes('jaggery')) productImageUrl = batchData.jaggery_powder_url;\nelse productImageUrl = batchData.desi_cow_ghee_url;\nproductImageUrl = productImageUrl || batchData.desi_cow_ghee_url || '';\n\n// Common header for all prompts\nconst commonHeader = [\n  'You are a world-class food photographer and creative art director working for a premium traditional Indian food brand.',\n  '',\n  'BRAND: ' + company,\n  'Brand Logo: ' + logoUrl,\n  'Product Photo: ' + productImageUrl,\n  'BRAND DESCRIPTION: Jaipur-based brand selling traditionally prepared, chemical-free, pure Indian food products. Cold pressed oils, A2 bilona ghee, organic jaggery, premium dry fruits. Everything made using traditional methods. No artificial preservatives.',\n  'BLOG TOPIC: ' + topic,\n  'PRIMARY KEYWORD: ' + primaryKeyword,\n  'META TITLE: ' + metaTitle,\n].join('\\n');\n\n// FEATURED IMAGE PROMPT\nconst featuredPrompt = [\n  commonHeader,\n  'BLOG CONCLUSION: ' + blogConclusion,\n  '',\n  'Your job is to DO ONE perfect image generation for the featured blog image. We need to explain this topic and Conclusion on basis of our featured image.',\n  'And on the image we need this text to be visually appealing for the user so that he will try to read the entire blog text: ' + metaTitle,\n  'and use our brand logo and Product photo in the blog Featured image.',\n  '',\n  'RULES:',\n  '- Only natural raw ingredients, surfaces, props and lighting',\n  '- Must feel premium, traditional, authentic Indian brand',\n  '- Warm earthy natural tones',\n  '- DSLR food photography quality',\n  '- 16:9 landscape format',\n  '- Be specific about: shot angle, lighting direction, surface texture, props, depth of field, mood',\n  '- 20 words maximum for scene description',\n].join('\\n');\n\n// SECTION IMAGE PROMPTS \u2014 one per H2\nconst sectionPrompts = sections.map((s, i) => {\n  const h2 = s.h2 || '';\n  const para = (s.talking_points || []).slice(0, 2).join(' ');\n  return [\n    commonHeader,\n    'H2 HEADING: ' + h2,\n    'SECTION PARA: ' + para,\n    '',\n    'Your job is to DO ONE perfect image generation for this blog section image. We need to explain this H2 and PARA on basis of our section image.',\n    'IMAGE MUST EXPLAIN THE CONCLUSION OF THE H2 HEADING AND PARA WITH MINIMAL OR NO WORDS POSSIBLE.',\n    'and use our brand logo and Product photo ARE GIVEN WITH THIS MESSAGE.',\n    '',\n    'RULES:',\n    '- Only natural raw ingredients, surfaces, props and lighting',\n    '- Must feel premium, traditional, authentic Indian brand',\n    '- Warm earthy natural tones',\n    '- DSLR food photography quality',\n    '- 16:9 landscape format',\n    '- Be specific about: shot angle, lighting direction, surface texture, props, depth of field, mood',\n  ].join('\\n');\n});\n\n// Build full combined prompt for Generate Image Prompt AI node\nconst fullCombinedPrompt = [\n  commonHeader,\n  'BLOG CONCLUSION: ' + blogConclusion,\n  'SECTION H2s: ' + h2sText,\n  '',\n  'Your job is to DO ONE perfect image generation for the featured blog image. We need to explain this topic and Conclusion on basis of our featured image.',\n  'And on the image we need this text to be visually appealing for the user so that he will try to read the entire blog text: ' + metaTitle,\n  'and use our brand logo and Product logo in the blog Featured image.',\n  '',\n  'For the section images we need to explain the h2 headings and PARA on basis of our section image. Image must explain the conclusion of the H2 heading and paragraph with minimal or no words possible and use our brand logo and Product logo ARE GIVEN WITH THIS MESSAGE',\n  '',\n  'For FEATURED image:',\n  '- Only natural raw ingredients, surfaces, props and lighting',\n  '- Must feel premium, traditional, authentic Indian brand',\n  '- Warm earthy natural tones',\n  '- DSLR food photography quality',\n  '- 16:9 landscape format',\n  '- Be specific about: shot angle, lighting direction, surface texture, props, depth of field, mood',\n  '- 20 words maximum',\n  '',\n  'For EACH SECTION image (one per H2):',\n  '- Only natural raw ingredients, surfaces, props and lighting',\n  '- Must feel premium, traditional, authentic Indian brand',\n  '- Warm earthy natural tones',\n  '- DSLR food photography quality',\n  '- 16:9 landscape format',\n  '- Be specific about: shot angle, lighting direction, surface texture, props, depth of field, mood',\n  '',\n  'Also provide title and alt text for each image.',\n  '- title: 40-60 characters, descriptive, include 1-2 keywords, suitable as image filename title',\n  '- alt_text: 10-15 words describing what the image shows',\n  'Also provide layout for featured image.',\n  '',\n  'EXAMPLE featured prompt:',\n  'Rustic hand-carved wooden table with visible grain and warm brown tones. Raw shelled groundnuts and a traditional brass oil pot arranged on LEFT side only. RIGHT side deliberately clean and empty for product placement. Soft golden natural light from left casting gentle shadows. Shallow depth of field. Premium wholesome traditional Indian kitchen vibes.',\n  '',\n  'Respond ONLY in JSON:',\n  '{',\n  '  \"featured\": {',\n  '    \"image_prompt\": \"your featured background scene prompt\",',\n  '    \"title\": \"40-60 char image title with 1-2 keywords\",',\n  '    \"alt_text\": \"10-15 word alt text describing the scene\",',\n  '    \"layout\": {',\n  '      \"product_side\": \"right or left or center\",',\n  '      \"product_top\": \"5% to 15%\",',\n  '      \"product_height\": \"65% to 80%\",',\n  '      \"text_side\": \"left or right\",',\n  '      \"text_bottom\": \"40px to 60px\",',\n  '      \"text_max_width\": \"480px to 580px\",',\n  '      \"logo_corner\": \"top-left or top-right\"',\n  '    }',\n  '  },',\n  '  \"sections\": [',\n  '    {',\n  '      \"h2\": \"exact H2 heading\",',\n  '      \"image_prompt\": \"scene prompt for this section\",',\n  '      \"title\": \"40-60 char image title with 1-2 keywords\",',\n  '      \"alt_text\": \"10-15 word alt text for this section image\"',\n  '    }',\n  '  ]',\n  '}'\n].join('\\n');\n\nreturn [{ json: {\n  ...d,\n  productImageUrl,\n  logoUrl,\n  // Individual resolved prompts for Google Doc\n  resolvedFeaturedPrompt: featuredPrompt,\n  resolvedSection0Prompt: sectionPrompts[0] || '',\n  resolvedSection1Prompt: sectionPrompts[1] || '',\n  resolvedSection2Prompt: sectionPrompts[2] || '',\n  resolvedSection3Prompt: sectionPrompts[3] || '',\n  // Full combined prompt for Generate Image Prompt AI node\n  fullCombinedPrompt: fullCombinedPrompt\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5248,
+        0
+      ],
+      "id": "69c6c295-4f22-477b-b12c-23c8aee1e819",
+      "name": "Build Image Prompt Text"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Execute workflow": {
+      "main": [
+        [
+          {
+            "node": "Get rows from sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get rows from sheet": {
+      "main": [
+        [
+          {
+            "node": "Select Pending Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Pending Batch": {
+      "main": [
+        [
+          {
+            "node": "Serper Search 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serper Search 1": {
+      "main": [
+        [
+          {
+            "node": "Serper Search 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serper Search 2": {
+      "main": [
+        [
+          {
+            "node": "Prepare Search Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Search Context": {
+      "main": [
+        [
+          {
+            "node": "Generate H2 Hints AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate H2 Hints AI": {
+      "main": [
+        [
+          {
+            "node": "Parse H2 Hints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1-mini (H2 Generator)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate H2 Hints AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse H2 Hints": {
+      "main": [
+        [
+          {
+            "node": "Answer The Public (FAQs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer The Public (FAQs)": {
+      "main": [
+        [
+          {
+            "node": "Parse FAQ Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse FAQ Questions": {
+      "main": [
+        [
+          {
+            "node": "Research AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research AI": {
+      "main": [
+        [
+          {
+            "node": "Parse Research Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1-mini (Research)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Research Output": {
+      "main": [
+        [
+          {
+            "node": "Outline AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outline AI": {
+      "main": [
+        [
+          {
+            "node": "Parse Outline + Build Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1-mini (Outline)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Outline AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Outline + Build Structure": {
+      "main": [
+        [
+          {
+            "node": "Build Writer Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Writer Prompt": {
+      "main": [
+        [
+          {
+            "node": "Writer AI (GPT-4.1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writer AI (GPT-4.1)": {
+      "main": [
+        [
+          {
+            "node": "Validate & Clean Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1 (Writer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Writer AI (GPT-4.1)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Clean Draft": {
+      "main": [
+        [
+          {
+            "node": "Build Humanizer Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Humanizer Prompt": {
+      "main": [
+        [
+          {
+            "node": "Humanizer AI (GPT-4.1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Humanizer AI (GPT-4.1)": {
+      "main": [
+        [
+          {
+            "node": "Build Image Prompts from Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1 (Humanizer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Humanizer AI (GPT-4.1)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image Prompts from Content": {
+      "main": [
+        [
+          {
+            "node": "SEO Meta AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Meta AI": {
+      "main": [
+        [
+          {
+            "node": "Parse SEO + Build Card Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1-mini (SEO)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Meta AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse SEO + Build Card Prompt": {
+      "main": [
+        [
+          {
+            "node": "Build Image Prompt Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompt AI": {
+      "main": [
+        [
+          {
+            "node": "Prep Featured Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1-mini (Image Prompt)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Image Prompt AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Featured Image1": {
+      "main": [
+        [
+          {
+            "node": "Prep Doc Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Doc Title": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Doc": {
+      "main": [
+        [
+          {
+            "node": "Prep Doc Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Doc Content": {
+      "main": [
+        [
+          {
+            "node": "Write All Sections to Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write All Sections to Doc": {
+      "main": [
+        [
+          {
+            "node": "Confirm Doc Written",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Doc Written": {
+      "main": [
+        [
+          {
+            "node": "Build Supabase Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sheet Update": {
+      "main": [
+        [
+          {
+            "node": "Mark as Done in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image Prompt Text": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompt AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Supabase Payload": {
+      "main": [
+        [
+          {
+            "node": "Publish to Next.js API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish to Next.js API": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sheet Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "4025daee-bd23-43ad-bdf8-c8c70e0955c6",
+  "meta": {
+    "instanceId": "6eeb08652c6d7c33e1af79a8bdcfefbc9b8771ce6f22a84be476fe7f12f42f53"
+  },
+  "id": "NYLqZVRO60grMpml",
+  "tags": []
+}
