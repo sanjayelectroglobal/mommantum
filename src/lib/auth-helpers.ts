@@ -12,7 +12,23 @@ if (!globalForCache.roleCache) {
   globalForCache.roleCache = new Map<string, { role: string; email: string; expires: number }>()
 }
 
-const roleCache = globalForCache.roleCache;
+const roleCache = globalForCache.roleCache
+
+function parseJwt(token: string): { exp?: number; sub?: string; email?: string } | null {
+  try {
+    const parts = token.split(".")
+    if (parts.length !== 3) return null
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/")
+    const json = Buffer.from(base64, "base64").toString("utf8")
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
+export function setCachedUserSession(token: string, role: string, email: string) {
+  roleCache.set(token, { role, email, expires: Date.now() + 15 * 60 * 1000 })
+}
 
 export interface UserSession {
   email: string
@@ -24,86 +40,47 @@ export async function getUserSession(req: NextRequest): Promise<UserSession | nu
     const cookieStore = await nextCookies()
     let accessToken = cookieStore.get("sb-access-token")?.value
 
-    let user: any = null
-    let refreshedSession: any = null
+    if (!accessToken) return null
 
-    // 1. Try checking cache and validating existing access token
-    if (accessToken) {
-      const cached = roleCache.get(accessToken)
-      if (cached && cached.expires > Date.now()) {
-        return { role: cached.role, email: cached.email }
-      }
-
-      try {
-        const { data, error: authError } = await supabaseAnon.auth.getUser(accessToken)
-        if (!authError && data?.user) {
-          user = data.user
-        }
-      } catch (err) {
-        console.error("getUserSession getUser exception:", err)
-      }
+    // 1. Check in-memory cache first (0ms)
+    const cached = roleCache.get(accessToken)
+    if (cached && cached.expires > Date.now()) {
+      return { role: cached.role, email: cached.email }
     }
 
-    // 2. If access token is invalid/missing, try refreshing with refresh token
-    if (!user) {
-      const refreshToken = cookieStore.get("sb-refresh-token")?.value
-      if (refreshToken) {
-        try {
-          const { data, error: refreshError } = await supabaseAnon.auth.refreshSession({
-            refresh_token: refreshToken
-          })
-          if (!refreshError && data?.session) {
-            refreshedSession = data.session
-            user = data.user
-            accessToken = data.session.access_token
-          }
-        } catch (err) {
-          console.error("getUserSession refreshSession exception:", err)
-        }
-      }
+    // 2. Decode JWT payload locally (0ms)
+    const payload = parseJwt(accessToken)
+    if (!payload || !payload.sub || (payload.exp && payload.exp * 1000 < Date.now())) {
+      return null
     }
 
-    if (!user) return null
+    const userId = payload.sub
+    const userEmail = payload.email || ""
 
-    // 3. Check profile role and status
+    // 3. Fast check: if sb-role cookie is set and valid
+    const roleCookie = cookieStore.get("sb-role")?.value
+    if (roleCookie && rolesConfig[roleCookie]) {
+      const session = { role: roleCookie, email: userEmail }
+      roleCache.set(accessToken, { ...session, expires: Date.now() + 15 * 60 * 1000 })
+      return session
+    }
+
+    // 4. Query profile directly by user ID (1 indexed query)
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("role, status")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single()
 
     if (profile?.role && profile?.status === "approved") {
       const session = {
         role: profile.role,
-        email: user.email || "",
+        email: userEmail,
       }
-
-      // Cache session using the active access token
-      if (accessToken) {
-        roleCache.set(accessToken, {
-          ...session,
-          expires: Date.now() + 600 * 1000 // cache for 10 minutes
-        })
-      }
-
-      // If refreshed, store the new cookies on the request headers / client browser
-      if (refreshedSession) {
-        cookieStore.set("sb-access-token", refreshedSession.access_token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: refreshedSession.expires_in,
-          path: "/",
-          sameSite: "lax",
-        })
-        cookieStore.set("sb-refresh-token", refreshedSession.refresh_token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-          path: "/",
-          sameSite: "lax",
-        })
-      }
-
+      roleCache.set(accessToken, {
+        ...session,
+        expires: Date.now() + 15 * 60 * 1000,
+      })
       return session
     }
 
@@ -125,10 +102,8 @@ export async function verifyUserRole(
   const isSubsetRole = ["content_manager", "editor", "viewer"].includes(session.role)
   const isAllowedRole = allowedRoles.includes(session.role) || (isSubsetRole && allowedRoles.includes("manager"))
 
-  // 1. Check if the role is allowed by the route handler definition
   if (!isAllowedRole) return false
 
-  // 2. Double-check if the JSON configuration allows this API path for the role
   const config = rolesConfig[session.role]
   if (!config) return false
 
@@ -136,7 +111,6 @@ export async function verifyUserRole(
   const pathAllowed = isPathAllowed(apiPath, config.allowedApiPaths)
   if (!pathAllowed) return false
 
-  // 3. Enforce read-only constraint for viewer role on API writes
   if (session.role === "viewer" && req.method !== "GET") {
     return false
   }

@@ -16,36 +16,36 @@ const SITEMAP_LINKS: SitemapLink[] = [
   {
     label: "Sitemap Index",
     url: `${BASE_URL}/sitemap.xml`,
-    description: "Master sitemap index — lists all sub-sitemaps",
+    description: "Master sitemap index — lists all sub-sitemaps for search engines",
     priority: "—",
     category: "Index",
   },
-  // Pages
+  // Sub-Sitemaps
   {
     label: "Static Pages",
     url: `${BASE_URL}/sitemap/pages.xml`,
-    description: "Homepage, Services, Work, Blog, About, Contact, Store, Legal",
+    description: "Homepage, Services, Work, Blog, About, Contact, Store, Legal pages",
     priority: "0.5 – 1.0",
     category: "Sub-Sitemaps",
   },
   {
     label: "Services",
     url: `${BASE_URL}/sitemap/services.xml`,
-    description: "All dynamic service pages",
+    description: "All dynamic service offering pages",
     priority: "0.8",
     category: "Sub-Sitemaps",
   },
   {
     label: "Blog Posts",
     url: `${BASE_URL}/sitemap/blogs.xml`,
-    description: "All published blog posts",
+    description: "All published blog posts and articles",
     priority: "0.8",
     category: "Sub-Sitemaps",
   },
   {
     label: "Work / Case Studies",
     url: `${BASE_URL}/sitemap/work.xml`,
-    description: "All case study & portfolio pages",
+    description: "All client case studies & portfolio pages",
     priority: "0.8",
     category: "Sub-Sitemaps",
   },
@@ -74,13 +74,6 @@ const SITEMAP_LINKS: SitemapLink[] = [
 
 const ROBOTS_LINK = `${BASE_URL}/robots.txt`
 
-const PRIORITY_GUIDE = [
-  { priority: "1.0", page: "Homepage", color: "text-rose-400" },
-  { priority: "0.9", page: "Core Hubs (Services, Store, Products)", color: "text-orange-400" },
-  { priority: "0.8", page: "Main Pages (Blog, Work, About, Contact, Individual posts)", color: "text-yellow-400" },
-  { priority: "0.5", page: "Legal Pages (Privacy Policy, Terms)", color: "text-slate-400" },
-]
-
 export default function AdminSitemapPage() {
   const [copied, setCopied] = useState<string | null>(null)
 
@@ -90,164 +83,154 @@ export default function AdminSitemapPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
-  const categories = Array.from(new Set(SITEMAP_LINKS.map((l) => l.category)))
-
   return (
-    <div className="flex flex-col gap-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1e2638] pb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-[10px] bg-[#0f9b63]/10 border border-[#0f9b63]/20">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#34d399"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-          </div>
+    <div className="pb-16">
+      {/* ── Page Header (Identical to Pages & Services) ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            Sitemap Manager
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {SITEMAP_LINKS.length} sitemaps total • Live XML sitemaps for Google Search Console & search bots
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <a
+            href={`${BASE_URL}/sitemap.xml`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f] transition-all flex items-center gap-1.5 shrink-0 h-[38px] justify-center"
+          >
+            View Sitemap Index ↗
+          </a>
+        </div>
+      </div>
+
+      {/* ── Search Console Tip Strip ── */}
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-[14px] bg-[#111827] border border-[#1f2937] p-4 text-[13px] text-slate-400">
+        <div className="flex items-start sm:items-center gap-3">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 font-bold text-[12px]">
+            ℹ
+          </span>
           <div>
-            <h1 className="text-xl font-bold text-white">Sitemap Manager</h1>
-            <p className="text-xs text-slate-400 mt-0.5">Live sitemap links for Mommantum — submit these to Google Search Console</p>
+            <span className="font-semibold text-white">Google Search Console Submission:</span>{" "}
+            Paste <code className="text-emerald-400 font-mono bg-[#070a0f] px-2 py-0.5 rounded border border-[#1f2937] text-[12px]">{BASE_URL}/sitemap.xml</code> into Search Console → Sitemaps to index all sub-sitemaps automatically.
           </div>
         </div>
         <a
-          href={`${BASE_URL}/sitemap.xml`}
+          href="https://search.google.com/search-console"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-[8px] text-sm font-medium text-white bg-[#e61e73] hover:bg-[#c91760] transition-all"
+          className="rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-slate-300 hover:text-white hover:border-[#374151] transition-all shrink-0 self-start sm:self-auto"
         >
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-          View Sitemap Index
+          Open Search Console ↗
         </a>
       </div>
 
-      {/* Google Search Console Tip */}
-      <div className="flex items-start gap-3 p-4 rounded-[10px] bg-[#3b5bdb]/10 border border-[#3b5bdb]/20">
-        <svg className="flex-shrink-0 mt-0.5" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6d8df7"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <div>
-          <p className="text-sm font-medium text-[#93b4ff]">Submit to Google Search Console</p>
-          <p className="text-xs text-slate-400 mt-1">
-            Go to{" "}
-            <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="text-[#93b4ff] hover:underline">
-              Google Search Console
-            </a>
-            {" "}→ Sitemaps → paste{" "}
-            <code className="text-slate-300 bg-[#1a2336] px-1 py-0.5 rounded text-[11px]">{BASE_URL}/sitemap.xml</code>
-            {" "}and hit Submit.
-          </p>
-        </div>
-      </div>
+      {/* ── Content Table (Identical to Pages & Services) ── */}
+      <div className="mt-8 overflow-hidden rounded-[18px] border border-[#1f2937] bg-[#111827]">
+        <table className="w-full border-collapse text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-[#1f2937] text-[11px] font-bold uppercase tracking-[0.05em] text-slate-400">
+              <th className="p-4">Sitemap Name</th>
+              <th className="p-4">Type</th>
+              <th className="p-4">Priority</th>
+              <th className="p-4">URL</th>
+                <th className="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1f2937]">
+              {SITEMAP_LINKS.map((link) => (
+              <tr key={link.url} className="hover:bg-[#1f2937]/40 transition-colors group">
+                <td className="p-4 font-semibold text-white">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[14px] text-white group-hover:text-[#e61e73] transition-colors">
+                      {link.label}
+                    </span>
+                    <span className="text-[11.5px] text-slate-400 font-normal">
+                      {link.description}
+                    </span>
+                  </div>
+                </td>
+                <td className="p-4">
+                  <span className="rounded bg-[#1f2937] px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-slate-700/50">
+                    {link.category}
+                  </span>
+                </td>
+                <td className="p-4">
+                  <span className="rounded bg-[#141e30] px-2 py-0.5 text-[11px] font-mono font-semibold text-sky-400 border border-sky-800/40">
+                    {link.priority}
+                  </span>
+                </td>
+                <td className="p-4 text-slate-400 font-mono text-[12px] truncate max-w-xs">
+                  {link.url.replace(BASE_URL, "")}
+                </td>
+                <td className="p-4 text-right space-x-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(link.url)}
+                    className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-white hover:border-[#374151] hover:bg-[#1f2937] transition-all"
+                  >
+                    {copied === link.url ? "✓ Copied" : "Copy URL"}
+                  </button>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-slate-400 hover:text-slate-300 hover:border-[#374151] transition-all"
+                  >
+                    Open ↗
+                  </a>
+                </td>
+              </tr>
+            ))}
 
-      {/* Sitemap Links */}
-      {categories.map((cat) => {
-        const links = SITEMAP_LINKS.filter((l) => l.category === cat)
-        return (
-          <div key={cat} className="flex flex-col gap-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 px-1">{cat}</div>
-            <div className="rounded-[12px] border border-[#1e2638] overflow-hidden divide-y divide-[#1a2336]">
-              {links.map((link) => (
-                <div key={link.url} className="flex items-center justify-between p-4 hover:bg-[#0f1624] transition-colors group gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-slate-200">{link.label}</p>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1a2336] text-slate-400 border border-[#263550] font-mono">
-                        priority {link.priority}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{link.description}</p>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-[#93b4ff] hover:underline font-mono mt-1 inline-block truncate max-w-full"
-                    >
-                      {link.url}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => copyToClipboard(link.url)}
-                      title="Copy URL"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[11px] font-medium text-slate-400 border border-[#263550] hover:border-[#3b5bdb] hover:text-white transition-all"
-                    >
-                      {copied === link.url ? (
-                        <>
-                          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                          Copy URL
-                        </>
-                      )}
-                    </button>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[11px] font-medium text-slate-400 border border-[#263550] hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
-                    >
-                      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                      Open
-                    </a>
-                  </div>
+            {/* robots.txt Row */}
+            <tr className="hover:bg-[#1f2937]/40 transition-colors group">
+              <td className="p-4 font-semibold text-white">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[14px] text-white group-hover:text-[#e61e73] transition-colors">
+                    robots.txt
+                  </span>
+                  <span className="text-[11.5px] text-slate-400 font-normal">
+                    Controls search engine and AI crawler access — grants all verified bots access
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )
-      })}
-
-      {/* robots.txt */}
-      <div className="flex flex-col gap-2">
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 px-1">Robots & Crawl Access</div>
-        <div className="rounded-[12px] border border-[#1e2638] overflow-hidden">
-          <div className="flex items-center justify-between p-4 hover:bg-[#0f1624] transition-colors gap-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-slate-200">robots.txt</p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  AI Crawlers: Allowed
+              </td>
+              <td className="p-4">
+                <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
+                  Crawler Directive
                 </span>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Controls search engine and AI crawler access — currently grants all AI bots full access</p>
-              <a
-                href={ROBOTS_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-[#93b4ff] hover:underline font-mono mt-1 inline-block"
-              >
-                {ROBOTS_LINK}
-              </a>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => copyToClipboard(ROBOTS_LINK)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[11px] font-medium text-slate-400 border border-[#263550] hover:border-[#3b5bdb] hover:text-white transition-all"
-              >
-                {copied === ROBOTS_LINK ? "✓ Copied!" : "Copy URL"}
-              </button>
-              <a
-                href={ROBOTS_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] text-[11px] font-medium text-slate-400 border border-[#263550] hover:border-emerald-500/40 hover:text-emerald-400 transition-all"
-              >
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                Open
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Priority Guide */}
-      <div className="flex flex-col gap-2">
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 px-1">Priority Reference</div>
-        <div className="rounded-[12px] border border-[#1e2638] overflow-hidden divide-y divide-[#1a2336]">
-          {PRIORITY_GUIDE.map((g) => (
-            <div key={g.priority} className="flex items-center gap-4 p-3.5 hover:bg-[#0f1624] transition-colors">
-              <span className={`font-mono text-sm font-bold w-8 ${g.color}`}>{g.priority}</span>
-              <span className="text-sm text-slate-400">{g.page}</span>
-            </div>
-          ))}
-        </div>
+              </td>
+              <td className="p-4">
+                <span className="rounded bg-[#141e30] px-2 py-0.5 text-[11px] font-mono font-semibold text-slate-400 border border-slate-700/50">
+                  Global
+                </span>
+              </td>
+              <td className="p-4 text-slate-400 font-mono text-[12px]">
+                /robots.txt
+              </td>
+              <td className="p-4 text-right space-x-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(ROBOTS_LINK)}
+                  className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-white hover:border-[#374151] hover:bg-[#1f2937] transition-all"
+                >
+                  {copied === ROBOTS_LINK ? "✓ Copied" : "Copy URL"}
+                </button>
+                <a
+                  href={ROBOTS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-slate-400 hover:text-slate-300 hover:border-[#374151] transition-all"
+                >
+                  Open ↗
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   )

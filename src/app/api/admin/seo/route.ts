@@ -19,7 +19,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ settings })
+    // Return only site pages (all individual blogs belong exclusively in the Blog section)
+    const pageSettings = (settings || []).filter(
+      (s: any) => !s.page_key?.toLowerCase().startsWith("blog:")
+    )
+
+    return NextResponse.json({ settings: pageSettings })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
@@ -125,4 +130,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+// DELETE /api/admin/seo - Delete setting by page_key
+export async function DELETE(req: NextRequest) {
+  try {
+    if (!(await verifyUserRole(req, ["admin", "manager"]))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    let pageKey = searchParams.get("page_key")
+
+    if (!pageKey) {
+      try {
+        const body = await req.json()
+        pageKey = body.page_key
+      } catch {
+        // ignore body parse error
+      }
+    }
+
+    if (!pageKey) {
+      return NextResponse.json({ error: "page_key is required" }, { status: 400 })
+    }
+
+    const { error } = await supabaseAdmin
+      .from("seo_setting")
+      .delete()
+      .eq("page_key", pageKey)
+
+    if (error) {
+      console.error("[DELETE /api/admin/seo error]:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    await revalidateContent({ type: "seo", pageKey })
+    return NextResponse.json({ success: true, deleted: pageKey })
+  } catch (err: any) {
+    console.error("[DELETE /api/admin/seo exception]:", err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
 

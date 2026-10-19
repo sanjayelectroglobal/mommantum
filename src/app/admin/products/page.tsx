@@ -2,34 +2,63 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAdminPath } from "@lib/hooks/use-admin-path"
+import { getAdminCache, setAdminCache } from "../_lib/admin-cache"
 
 export default function AdminProductsList() {
   const { prefixPath } = useAdminPath()
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [deletingProduct, setDeletingProduct] = useState<any | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   useEffect(() => {
+    const cached = getAdminCache<any[]>("admin_products")
+    if (cached && cached.length > 0) {
+      setProducts(cached)
+      setLoading(false)
+    }
+
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((d) => {
-        setProducts(Array.isArray(d) ? d : [])
+        const list = Array.isArray(d) ? d : []
+        setProducts(list)
+        setAdminCache("admin_products", list)
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [])
 
-  async function deleteProduct(id: string, name: string) {
-    if (!confirm(`Delete product "${name}"? This cannot be undone.`)) return
-    const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
-    if (res.ok) {
-      setProducts(products.filter((p) => p.id !== id))
-    } else {
-      alert("Failed to delete product")
+  async function handleConfirmDelete() {
+    if (!deletingProduct) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(deletingProduct.id)}`, { method: "DELETE" })
+      if (res.ok) {
+        setProducts((prev) => {
+          const next = prev.filter((p) => p.id !== deletingProduct.id)
+          setAdminCache("admin_products", next)
+          return next
+        })
+        setDeletingProduct(null)
+      } else {
+        const d = await res.json().catch(() => null)
+        setDeleteError(d?.error || "Failed to delete product")
+      }
+    } catch {
+      setDeleteError("Network error while deleting product")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
             Products
@@ -38,12 +67,14 @@ export default function AdminProductsList() {
             {products.length} products total
           </p>
         </div>
-        <Link
-          href={prefixPath("/admin/products/new")}
-          className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f] transition-all"
-        >
-          + New Product
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href={prefixPath("/admin/products/new")}
+            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f] transition-all shrink-0 h-[38px] flex items-center justify-center"
+          >
+            + New Product
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -132,8 +163,12 @@ export default function AdminProductsList() {
                         View ↗
                       </Link>
                       <button
-                        onClick={() => deleteProduct(p.id, p.title)}
-                        className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[12px] font-semibold text-red-400 hover:bg-red-500/20 transition-all"
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null)
+                          setDeletingProduct(p)
+                        }}
+                        className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[12px] font-semibold text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
                       >
                         Delete
                       </button>
@@ -143,6 +178,52 @@ export default function AdminProductsList() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deletingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-[18px] border border-[#1f2937] bg-[#111827] p-6 shadow-2xl">
+            <h3 className="text-[17px] font-extrabold text-white">Delete Product</h3>
+            <p className="mt-2 text-[13px] text-slate-300">
+              Are you sure you want to delete <span className="text-white font-bold">&quot;{deletingProduct.title}&quot;</span>? This cannot be undone.
+            </p>
+
+            {deleteError && (
+              <div className="mt-3 rounded-[8px] bg-red-500/10 border border-red-500/30 p-2.5 text-[12px] text-red-400">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingProduct(null)
+                  setDeleteError(null)
+                }}
+                disabled={isDeleting}
+                className="rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-4 py-2 text-[12px] font-semibold text-slate-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="rounded-[8px] bg-red-600 hover:bg-red-700 px-4 py-2 text-[12px] font-bold text-white transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting && (
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                <span>{isDeleting ? "Deleting..." : "Delete Product"}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

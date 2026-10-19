@@ -79,9 +79,39 @@ const nextConfig = {
     ],
   },
   async headers() {
-    return [
+    const isProd = process.env.NODE_ENV === "production"
+
+    const adminHeaders = [
       {
-        // Long-lived cache for all static assets (_next/static)
+        // Admin routes must never be cached by any browser or proxy
+        source: "/(admin|admin-login|api)/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          },
+          {
+            key: "Pragma",
+            value: "no-cache",
+          },
+          {
+            key: "Expires",
+            value: "0",
+          },
+        ],
+      },
+    ]
+
+    // In development mode, apply ONLY the admin/API no-cache rule.
+    // Do not set any Cache-Control header for static chunks, images, videos, or HTML pages.
+    if (!isProd) {
+      return adminHeaders
+    }
+
+    return [
+      ...adminHeaders,
+      {
+        // Long-lived cache for all static assets (_next/static) in production only
         source: "/_next/static/:path*",
         headers: [
           {
@@ -91,22 +121,22 @@ const nextConfig = {
         ],
       },
       {
-        // Cache all local static images in /public directory for 1 year
-        source: "/:path*.(png|jpg|jpeg|gif|webp|svg|ico)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-      {
-        // Short stale-while-revalidate for HTML pages (excluding system/static assets)
-        source: "/((?!_next/static|_next/image|favicon.ico|logo.png|images|assets).*)",
+        // Public marketing pages caching - strictly excluded for admin and api routes
+        source: "/((?!_next/static|_next/image|admin|admin-login|api|favicon.ico|logo.png|images|assets).*)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
+      {
+        // Cache all local static images and media in /public directory for 1 year in production
+        source: "/:path*.(png|jpg|jpeg|gif|webp|svg|ico|mp4|webm)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },

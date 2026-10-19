@@ -1,6 +1,8 @@
 "use client"
-import { useEffect, useState } from "react"
-import { Edit, Trash2, X, Shield, Key, AlertTriangle, CheckCircle, UserPlus } from "lucide-react"
+import { useEffect, useState, useMemo } from "react"
+import { Edit, Trash2, X, Shield, Key, AlertTriangle, CheckCircle, UserPlus, Search } from "lucide-react"
+import { AdminSearchBar } from "../_components/AdminSearchBar"
+import { getAdminCache, setAdminCache } from "../_lib/admin-cache"
 
 interface Profile {
   id: string
@@ -14,6 +16,19 @@ const OWNER_EMAIL = "admin@mommantum.com"
 export default function UserManagement() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users
+    const q = searchQuery.toLowerCase().trim()
+    return users.filter((u) => {
+      return (
+        (u.email || "").toLowerCase().includes(q) ||
+        (u.role || "").toLowerCase().includes(q) ||
+        (u.status || "").toLowerCase().includes(q)
+      )
+    })
+  }, [users, searchQuery])
 
   // Logged-in user state
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
@@ -43,6 +58,11 @@ export default function UserManagement() {
   const [deleteError, setDeleteError] = useState("")
 
   useEffect(() => {
+    const cached = getAdminCache<Profile[]>("admin_user_profiles")
+    if (cached && cached.length > 0) {
+      setUsers(cached)
+      setLoading(false)
+    }
     fetchUsers()
     fetch("/api/auth/me")
       .then((res) => res.json())
@@ -63,7 +83,9 @@ export default function UserManagement() {
         return res.json()
       })
       .then((data) => {
-        setUsers(Array.isArray(data) ? data : [])
+        const list = Array.isArray(data) ? data : []
+        setUsers(list)
+        setAdminCache("admin_user_profiles", list)
         setLoading(false)
       })
       .catch((err) => {
@@ -223,14 +245,23 @@ export default function UserManagement() {
     "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.05em] text-[#e2e8f0]"
 
   return (
-    <div className="max-w-[1200px] text-slate-200">
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          User Management
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Create, update, and manage administrative user accounts and access roles.
-        </p>
+    <div className="max-w-[1200px] text-slate-200 pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            User Management
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {users.length} accounts total • Create, update, and manage administrative user accounts and access roles.
+          </p>
+        </div>
+        <div className="shrink-0">
+          <AdminSearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search accounts..."
+          />
+        </div>
       </div>
 
       {/* Pending Requests Section */}
@@ -359,17 +390,51 @@ export default function UserManagement() {
 
         {/* Right Side: Users List */}
         <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937] lg:col-span-2">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield size={18} className="text-slate-400" />
-            <h2 className="text-[16px] font-extrabold text-white">
-              System Accounts
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Shield size={18} className="text-slate-400" />
+              <h2 className="text-[16px] font-extrabold text-white">
+                System Accounts
+              </h2>
+            </div>
+            {!loading && users.length > 0 && (
+              <div className="relative min-w-[200px] sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search accounts..."
+                  className="w-full rounded-[10px] border border-[#1f2937] bg-[#0c121e] pl-8 pr-7 py-1.5 text-[12px] text-white placeholder-slate-500 focus:border-[#e61e73] focus:outline-none transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-[11px]"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {loading ? (
             <div className="text-center py-12 text-slate-500">Loading accounts...</div>
           ) : users.length === 0 ? (
             <div className="text-center py-12 text-slate-500">No accounts found.</div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <p>No accounts matching &ldquo;{searchQuery}&rdquo;</p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="mt-2 text-[12px] text-[#e61e73] hover:underline"
+              >
+                Clear Search
+              </button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-[13px]">
@@ -382,7 +447,7 @@ export default function UserManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1f2937]">
-                  {users.map((u) => {
+                  {filteredUsers.map((u) => {
                     const isOwner = u.email === OWNER_EMAIL
                     const isCurrentUser = u.email === currentUserEmail
                     const canEdit = currentUserEmail === OWNER_EMAIL || !isOwner

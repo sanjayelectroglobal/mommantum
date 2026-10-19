@@ -34,14 +34,16 @@ export default function AdminPriceListsPage() {
   })
 
   return (
-    <div className="text-slate-200">
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          Price Lists
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Manage product pricing catalogs, regional curriencies, and rate sheets
-        </p>
+    <div className="text-slate-200 pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            Price Lists
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {pricingItems.length} price rules total • Manage product pricing catalogs, regional currencies, and rate sheets
+          </p>
+        </div>
       </div>
 
       {loading ? (

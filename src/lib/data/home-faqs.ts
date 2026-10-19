@@ -1,3 +1,10 @@
+/**
+ * @file home-faqs.ts
+ * @description Curated homepage frequently asked questions for Mommantum.
+ * Contains direct, authentic answers regarding agency services, office location,
+ * remote capabilities, and contact options.
+ */
+
 export interface HomeFAQ {
   question: string
   answer: string
@@ -10,9 +17,10 @@ export const HOME_FAQS: HomeFAQ[] = [
       "Mommantum is a Jaipur based digital marketing agency and growth studio. We help D2C and ecommerce brands grow through performance marketing, SEO, social media marketing, branding, conversion rate optimization, web development, AI automation, AI agents, and video services, all connected so each channel supports the others.",
   },
   {
+    // Mommantum official headquarters office address updated to Anand Vihar, Jagatpura
     question: "Where is Mommantum located and can I visit the office?",
     answer:
-      "Our office is at B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass, Jaipur, Rajasthan 302029. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
+      "Our office is at B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
   },
   {
     question: "Do you work with clients outside Jaipur?",

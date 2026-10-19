@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { getAdminCache, setAdminCache } from "../_lib/admin-cache"
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([])
@@ -16,15 +17,21 @@ export default function AdminCategoriesPage() {
   const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
+    const cached = getAdminCache<any[]>("admin_categories")
+    if (cached && cached.length > 0) {
+      setCategories(cached)
+      setLoading(false)
+    }
     fetchCategories()
   }, [])
 
   function fetchCategories() {
-    setLoading(true)
     fetch("/api/admin/categories")
       .then((res) => res.json())
       .then((data) => {
-        setCategories(Array.isArray(data) ? data : [])
+        const list = Array.isArray(data) ? data : []
+        setCategories(list)
+        setAdminCache("admin_categories", list)
         setLoading(false)
       })
       .catch((err) => {
@@ -85,6 +92,10 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  const [deletingCategory, setDeletingCategory] = useState<any | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
   function startEdit(cat: any) {
     setEditingId(cat.id)
     setName(cat.name)
@@ -105,13 +116,28 @@ export default function AdminCategoriesPage() {
     setIsInternal(false)
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete category "${name}"?`)) return
-    const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" })
-    if (res.ok) {
-      fetchCategories()
-    } else {
-      alert("Failed to delete category")
+  async function handleConfirmDelete() {
+    if (!deletingCategory) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    try {
+      const res = await fetch(`/api/admin/categories/${encodeURIComponent(deletingCategory.id)}`, { method: "DELETE" })
+      if (res.ok) {
+        setCategories((prev) => {
+          const next = prev.filter((c) => c.id !== deletingCategory.id)
+          setAdminCache("admin_categories", next)
+          return next
+        })
+        setDeletingCategory(null)
+      } else {
+        const d = await res.json().catch(() => null)
+        setDeleteError(d?.error || "Failed to delete category")
+      }
+    } catch {
+      setDeleteError("Network error while deleting category")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -121,14 +147,16 @@ export default function AdminCategoriesPage() {
     "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.05em] text-[#e2e8f0]"
 
   return (
-    <div className="max-w-[1000px] text-slate-200">
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          Product Categories
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Create hierarchy-based categories for products
-        </p>
+    <div className="text-slate-200 pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            Product Categories
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {categories.length} categories total • Create hierarchy-based categories for products
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-8 md:grid-cols-3">
@@ -227,9 +255,11 @@ export default function AdminCategoriesPage() {
 
         {/* Right Side: List Categories */}
         <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937] md:col-span-2">
-          <h2 className="text-[16px] font-extrabold text-white mb-4">
-            Categories List
-          </h2>
+          <div className="mb-4">
+            <h2 className="text-[16px] font-extrabold text-white">
+              Categories List
+            </h2>
+          </div>
 
           {loading ? (
             <div className="text-center py-12 text-slate-500">Loading categories...</div>
@@ -272,8 +302,12 @@ export default function AdminCategoriesPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(cat.id, cat.name)}
-                          className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-semibold text-red-400 hover:bg-red-500/20 transition-all"
+                          type="button"
+                          onClick={() => {
+                            setDeleteError(null)
+                            setDeletingCategory(cat)
+                          }}
+                          className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-semibold text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
                         >
                           Delete
                         </button>
@@ -286,6 +320,52 @@ export default function AdminCategoriesPage() {
           )}
         </div>
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deletingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-[18px] border border-[#1f2937] bg-[#111827] p-6 shadow-2xl">
+            <h3 className="text-[17px] font-extrabold text-white">Delete Category</h3>
+            <p className="mt-2 text-[13px] text-slate-300">
+              Are you sure you want to delete <span className="text-white font-bold">&quot;{deletingCategory.name}&quot;</span>? This cannot be undone.
+            </p>
+
+            {deleteError && (
+              <div className="mt-3 rounded-[8px] bg-red-500/10 border border-red-500/30 p-2.5 text-[12px] text-red-400">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingCategory(null)
+                  setDeleteError(null)
+                }}
+                disabled={isDeleting}
+                className="rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-4 py-2 text-[12px] font-semibold text-slate-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="rounded-[8px] bg-red-600 hover:bg-red-700 px-4 py-2 text-[12px] font-bold text-white transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting && (
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                <span>{isDeleting ? "Deleting..." : "Delete Category"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

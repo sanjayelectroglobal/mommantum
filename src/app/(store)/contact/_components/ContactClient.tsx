@@ -1,3 +1,9 @@
+/**
+ * @file ContactClient.tsx
+ * @description Interactive Contact page component for Mommantum.
+ * Displays contact form, communication channels, social links,
+ * and official office headquarters address in Jaipur.
+ */
 "use client"
 
 import { Epilogue, Outfit, Mansalva } from "next/font/google"
@@ -438,6 +444,18 @@ export default function ContactClient() {
                     </span>
                     +91 95889 73492
                   </a>
+
+                  {/* Office Address - Mommantum Jaipur Headquarters */}
+                  <div className={`${outfit.className} contact-link text-[14px] leading-relaxed text-slate-600`}>
+                    <span className="contact-icon flex-shrink-0">
+                      {/* Location Pin icon */}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e61e73" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </span>
+                    <span>B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan</span>
+                  </div>
                 </div>
               </div>
 
@@ -497,20 +515,25 @@ export default function ContactClient() {
               <h2 className={`${epilogue.className} mt-2 text-[34px] font-extrabold tracking-[-0.05em] text-[#0e2547] lg:text-[50px]`}>
                 <span className="h-accent">Headquarters</span>
               </h2>
-              <p className={`${outfit.className} mx-auto mt-3 text-[15px] text-slate-400`}>
-                Jaipur, Rajasthan, India
+              {/* Official Office Address */}
+              <p className={`${outfit.className} mx-auto mt-3 max-w-[500px] text-[15px] font-medium text-slate-600`}>
+                B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan
+              </p>
+              <p className={`${outfit.className} mx-auto mt-1 text-[13px] text-slate-400`}>
+                Open Monday to Saturday, 9:00 AM – 9:00 PM
               </p>
             </div>
 
             <div className="reveal map-card mt-12" style={{ transitionDelay: "0.1s" }}>
+              {/* Google Maps embed centered on Anand Vihar, Jagatpura */}
               <iframe
-                src="https://www.google.com/maps?q=Jaipur%2C%20Rajasthan%2C%20India&z=12&output=embed"
+                src="https://www.google.com/maps?q=B-147%2C%20Anand%20Vihar%2C%20Jagatpura%2C%20Jaipur%2C%20Rajasthan%20302017&z=15&output=embed"
                 width="100%"
                 height="460"
                 style={{ border: 0, display: "block" }}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Mommantum Headquarters Map"
+                title="Mommantum Headquarters Map - Jagatpura, Jaipur"
               />
             </div>
 

@@ -92,10 +92,10 @@
     "telephone": "+917742276031",
     "whatsapp": "+917742276031 (same number; expose as contactPoint, contactType 'customer support', availableLanguage English/Hindi only if the site supports both)",
     "address": {
-      "streetAddress": "B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass",
+      "streetAddress": "B-147, Anand Vihar, Jagatpura",
       "addressLocality": "Jaipur",
       "addressRegion": "Rajasthan",
-      "postalCode": "302029",
+      "postalCode": "302017",
       "addressCountry": "IN"
     },
     "clientsCanVisitOffice": true,
@@ -872,8 +872,8 @@
       },
       {
         "question": "Where is Mommantum located and can I visit the office?",
-        "answer": "Our office is at B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass, Jaipur, Rajasthan 302029. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
-        "answer_words": 40
+        "answer": "Our office is at B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
+        "answer_words": 37
       },
       {
         "question": "Do you work with clients outside Jaipur?",

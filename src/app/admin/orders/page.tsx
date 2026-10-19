@@ -28,14 +28,16 @@ export default function AdminOrdersList() {
   }
 
   return (
-    <div>
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          Orders
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Manage and inspect storefront customer orders
-        </p>
+    <div className="pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            Orders
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {orders.length} orders total • Manage and inspect storefront customer orders
+          </p>
+        </div>
       </div>
 
       {loading ? (

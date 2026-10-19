@@ -9,17 +9,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    const { data } = await supabaseAdmin
-      .from("site_setting")
-      .select("custom_admin_path")
-      .limit(1)
-    const customAdminPath = data && data.length > 0 ? data[0].custom_admin_path : null
+    const customAdminPath = process.env.CUSTOM_ADMIN_PATH || "admin"
 
     return NextResponse.json({
       ok: true,
       email: session.email,
       role: session.role,
-      customAdminPath: customAdminPath || "admin"
+      customAdminPath
     })
   } catch (error) {
     console.error("Auth me error:", error)

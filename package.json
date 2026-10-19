@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "next dev -p 8000",
+    "dev:clean": "node -e \"const fs = require('fs'); try { fs.rmSync('.next', { recursive: true, force: true }); console.log('Cleaned .next build cache successfully'); } catch(e){}\" && next dev -p 8000",
     "build": "next build",
     "start": "next start -p 8000",
     "lint": "next lint",

@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
     await revalidateContent({ type: "blog", slug: data?.slug || slug })
     return NextResponse.json({ ok: true, data })
   } catch (err: any) {

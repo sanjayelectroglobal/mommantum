@@ -1,7 +1,7 @@
 import { DEFAULT_IN_LANGUAGE, getEntityId, normalizeUrl } from "../config"
 
 export interface WebPageTemplateOptions {
-  type?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage"
+  type?: "WebPage" | "AboutPage" | "ContactPage" | "CollectionPage" | "ItemPage"
   pageUrl: string
   baseUrl: string
   name: string
@@ -12,12 +12,16 @@ export interface WebPageTemplateOptions {
   keywords?: string[]
   mainEntityId?: string
   includeWebSite?: boolean
+  hasPart?: Record<string, any> | null
 }
 
 /**
- * Creates WebPage (or subtype AboutPage, ContactPage, CollectionPage) schema.
+ * Creates WebPage (or subtype AboutPage, ContactPage, CollectionPage, ItemPage) schema.
  * Properties name/description/url/image match <title>, meta description, canonical, og:image.
  * @id format: {pageUrl}#webpage
+ * Nested FAQPage via hasPart (never standalone).
+ * Cross-page references: isPartOf -> #website, about -> #organization.
+ * About/Contact pages reference #organization via mainEntity.
  */
 export function createWebPageSchema(options: WebPageTemplateOptions): Record<string, any> {
   const {
@@ -31,7 +35,8 @@ export function createWebPageSchema(options: WebPageTemplateOptions): Record<str
     dateModified,
     keywords,
     mainEntityId,
-    includeWebSite = false,
+    includeWebSite = true,
+    hasPart,
   } = options
 
   const webpageId = getEntityId(pageUrl, "#webpage")
@@ -53,7 +58,8 @@ export function createWebPageSchema(options: WebPageTemplateOptions): Record<str
     inLanguage: DEFAULT_IN_LANGUAGE,
   }
 
-  if (includeWebSite) {
+  // Cross-page reference to WebSite: all pages point to #website
+  if (includeWebSite !== false) {
     pageNode.isPartOf = {
       "@id": websiteId,
     }
@@ -81,17 +87,28 @@ export function createWebPageSchema(options: WebPageTemplateOptions): Record<str
   }
 
   if (keywords && keywords.length > 0) {
-    // Primary first, max 6, no stuffing
     const cleanKeywords = Array.from(new Set(keywords.map((k) => k.trim()).filter(Boolean))).slice(0, 6)
     if (cleanKeywords.length > 0) {
       pageNode.keywords = cleanKeywords.join(", ")
     }
   }
 
+  // Main entity rule:
+  // - Explicit mainEntityId if provided (e.g. pointing to #product, #itemlist, or #article)
+  // - About and Contact pages point to #organization
   if (mainEntityId) {
     pageNode.mainEntity = {
       "@id": mainEntityId,
     }
+  } else if (type === "AboutPage" || type === "ContactPage") {
+    pageNode.mainEntity = {
+      "@id": orgId,
+    }
+  }
+
+  // Nested FAQPage via hasPart (never standalone in graph)
+  if (hasPart) {
+    pageNode.hasPart = hasPart
   }
 
   return pageNode

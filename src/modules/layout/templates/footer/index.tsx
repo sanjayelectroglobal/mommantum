@@ -7,6 +7,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { Epilogue, Outfit } from "next/font/google"
+import FooterFaqSection from "./FooterFaqSection"
 
 const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
@@ -16,6 +17,7 @@ const companyLinks = [
   { name: "Work", href: "/work" },
   { name: "Blog", href: "/blog" },
   { name: "About", href: "/about" },
+  { name: "FAQs", href: "/faq" },
   { name: "Privacy Policy", href: "/privacy-policy" },
   { name: "Terms & Conditions", href: "/terms-and-conditions" },
 ]
@@ -529,6 +531,8 @@ function EditzFooter() {
 export default function Footer({ isEditzProp }: { isEditzProp?: boolean }) {
   const pathname = usePathname()
   const isEditz = isEditzProp || pathname?.startsWith("/editz") || pathname?.includes("editz")
+  // Display the Homepage Footer FAQ section on the root homepage
+  const isHomepage = pathname === "/"
 
   if (isEditz) {
     return <EditzFooter />
@@ -536,6 +540,8 @@ export default function Footer({ isEditzProp }: { isEditzProp?: boolean }) {
 
   return (
     <footer className="relative border-t border-slate-100 bg-white">
+      {/* ── Homepage Footer FAQ Section ── */}
+      {isHomepage && <FooterFaqSection />}
 
       <style>{`
         .footer-social-btn {

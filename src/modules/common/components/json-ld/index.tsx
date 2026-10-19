@@ -16,7 +16,7 @@ import {
   resolveLegalPageData,
   CollectionItemInput,
 } from "@lib/schema/resolvers"
-import { generateSchemaGraph } from "@lib/schema/generate-graph"
+import { generateSchemaGraph, detectPageType, filterAndDeduplicateNodes } from "@lib/schema/generate-graph"
 import { serializeJsonLd } from "@lib/schema/serialize"
 
 export type JsonLdProps =
@@ -95,12 +95,51 @@ export default async function JsonLd(props: JsonLdProps) {
   }
 
   const graph = await generateSchemaGraph(resolved)
+
+  const seoSetting = "seoSetting" in props ? props.seoSetting : undefined
+  if (seoSetting?.schema_json) {
+    try {
+      const custom =
+        typeof seoSetting.schema_json === "string"
+          ? JSON.parse(seoSetting.schema_json)
+          : seoSetting.schema_json
+
+      let customNodes: any[] = []
+      if (Array.isArray(custom)) {
+        customNodes = custom
+      } else if (custom && typeof custom === "object") {
+        if (Array.isArray(custom["@graph"])) {
+          customNodes = custom["@graph"]
+        } else {
+          customNodes = [custom]
+        }
+      }
+
+      const existingIds = new Set(graph["@graph"].map((n: any) => n["@id"]).filter(Boolean))
+      for (const node of customNodes) {
+        if (node["@id"] && existingIds.has(node["@id"])) {
+          const idx = graph["@graph"].findIndex((n: any) => n["@id"] === node["@id"])
+          if (idx !== -1) {
+            graph["@graph"][idx] = { ...graph["@graph"][idx], ...node }
+          }
+        } else {
+          graph["@graph"].push(node)
+        }
+      }
+    } catch (e) {
+      console.error("Invalid custom schema_json:", e)
+    }
+  }
+
+  // Final safety filter before output: drop any node whose @type is not allowed for this page type,
+  // and de-duplicate by @id and @type.
+  const pageType = detectPageType(resolved)
+  graph["@graph"] = filterAndDeduplicateNodes(graph["@graph"], pageType)
+
   const jsonLdString = serializeJsonLd(graph)
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: jsonLdString }}
-    />
-  )
+  return React.createElement("script", {
+    type: "application/ld+json",
+    dangerouslySetInnerHTML: { __html: jsonLdString },
+  })
 }

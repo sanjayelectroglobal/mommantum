@@ -70,6 +70,7 @@ export async function PUT(
       .eq("slug", params.slug)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
     await revalidateContent({ type: "blog", slug, oldSlug: params.slug })
     return NextResponse.json({ ok: true })
   } catch (err: any) {
@@ -88,19 +89,38 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
-    // Soft delete
-    const { error } = await supabaseAdmin
+    const raw = params.slug || ""
+    const decoded = decodeURIComponent(raw)
+
+    // Soft delete matching by slug or id
+    const { data, error } = await supabaseAdmin
       .from("post")
       .update({
         deleted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("slug", params.slug)
+      .or(`slug.eq."${decoded}",id.eq."${decoded}",slug.eq."${raw}",id.eq."${raw}"`)
+      .select("id, slug")
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    await revalidateContent({ type: "blog", slug: params.slug })
-    return NextResponse.json({ ok: true })
+    if (error) {
+      console.error("[DELETE /api/admin/blog] Supabase error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Clean up corresponding seo_setting if any
+    try {
+      await supabaseAdmin
+        .from("seo_setting")
+        .delete()
+        .or(`page_key.eq."blog:${decoded}",page_key.eq."blog:${raw}"`)
+    } catch {
+      // ignore
+    }
+
+    await revalidateContent({ type: "blog", slug: decoded })
+    return NextResponse.json({ ok: true, deleted: data })
   } catch (err: any) {
+    console.error("[DELETE /api/admin/blog] Catch error:", err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

@@ -1,559 +1,696 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
+import Link from "next/link"
+import { useAdminPath } from "@lib/hooks/use-admin-path"
+import { HOME_FAQS } from "@lib/data/home-faqs"
+import { AdminSearchBar, AdminEmptySearch } from "../_components/AdminSearchBar"
+import { getAdminCache, setAdminCache } from "../_lib/admin-cache"
+import SharedEntityEditor, { getActiveSchemaBadges } from "../_components/SharedEntityEditor"
+export type FAQItem = {
+  question: string
+  answer: string
+}
 
-export default function AdminSeoSettingsPage() {
-  const [siteForm, setSiteForm] = useState({
-    site_name: "",
-    site_url: "",
-    logo_url: "",
-    favicon_url: "",
-    brand_name: "",
-    custom_admin_path: "",
+export type PageRecord = {
+  page_key: string
+  page_label?: string | null
+  slug?: string | null
+  canonical_url?: string | null
+  meta_title?: string | null
+  meta_description?: string | null
+  primary_keyword?: string | null
+  secondary_keywords?: string[] | string | null
+  meta_keywords?: string | null
+  robots_index?: boolean | null
+  robots_follow?: boolean | null
+  og_title?: string | null
+  og_description?: string | null
+  og_image?: string | null
+  og_url?: string | null
+  og_type?: string | null
+  twitter_card?: string | null
+  twitter_title?: string | null
+  twitter_description?: string | null
+  twitter_image?: string | null
+  schema_json?: string | null
+  faq_section?: FAQItem[] | null
+}
+
+const CORE_PAGES: PageRecord[] = [
+  { page_key: "homepage", page_label: "Home Page", slug: "/" },
+  { page_key: "about", page_label: "About Us", slug: "/about" },
+  { page_key: "services", page_label: "Services Listing", slug: "/services" },
+  { page_key: "work", page_label: "Case Studies & Work", slug: "/work" },
+  { page_key: "blog", page_label: "Blog Listing", slug: "/blog" },
+  { page_key: "contact", page_label: "Contact Us", slug: "/contact" },
+  { page_key: "privacy-policy", page_label: "Privacy Policy", slug: "/privacy-policy" },
+  { page_key: "terms-and-conditions", page_label: "Terms & Conditions", slug: "/terms-and-conditions" },
+  { page_key: "editz", page_label: "Editz Video Services", slug: "/editz" },
+  { page_key: "blog-ai", page_label: "AI Blog Hub", slug: "/blog-ai" },
+]
+
+function resolveSlug(page: PageRecord): string {
+  if (page.slug && page.slug.startsWith("/")) return page.slug
+  const key = (page.page_key || "").toLowerCase().trim()
+  if (key === "home" || key === "homepage") return "/"
+  if (key === "about") return "/about"
+  if (key === "contact") return "/contact"
+  if (key === "services") return "/services"
+  if (key === "work" || key === "case-studies" || key === "case-study") return "/work"
+  if (key === "blog") return "/blog"
+  if (key === "terms-and-conditions") return "/terms-and-conditions"
+  if (key === "privacy-policy") return "/privacy-policy"
+  if (key === "editz") return "/editz"
+  if (key === "blog-ai") return "/blog-ai"
+  if (key.startsWith("service:")) return `/services/${key.replace("service:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (key.startsWith("services:")) return `/services/${key.replace("services:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (key.startsWith("work:")) return `/work/${key.replace("work:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (key.startsWith("case-study:")) return `/work/${key.replace("case-study:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (key.startsWith("case-studies:")) return `/work/${key.replace("case-studies:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (key.startsWith("blog:")) return `/blog/${key.replace("blog:", "").trim().toLowerCase().replace(/\s+/g, "-")}`
+  if (page.slug) return `/${page.slug.replace(/^\/+/, "")}`
+  return `/${key}`
+}
+
+function resolveLabel(page: PageRecord): string {
+  if (page.page_label && page.page_label.trim()) return page.page_label
+  const key = (page.page_key || "").toLowerCase().trim()
+  if (key === "home" || key === "homepage") return "Home Page"
+  if (key === "about") return "About Us"
+  if (key === "contact") return "Contact Us"
+  if (key === "services") return "Services Listing"
+  if (key === "work" || key === "case-studies") return "Case Studies & Work"
+  if (key === "blog") return "Blog Listing"
+  if (key === "terms-and-conditions") return "Terms & Conditions"
+  if (key === "privacy-policy") return "Privacy Policy"
+  if (key === "editz") return "Editz Video Services"
+  if (key === "blog-ai") return "AI Blog Hub"
+  if (key.startsWith("blog:")) {
+    const slug = key.replace("blog:", "").trim()
+    return `BLOG: ${slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}`
+  }
+  if (key.startsWith("service:")) {
+    const slug = key.replace("service:", "").trim()
+    return `Service: ${slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}`
+  }
+  return page.page_key
+}
+
+
+export default function AdminPagesList() {
+  const { prefixPath } = useAdminPath()
+  const [pages, setPages] = useState<PageRecord[]>(CORE_PAGES)
+  const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredPages = useMemo(() => {
+    if (!searchQuery.trim()) return pages
+    const q = searchQuery.toLowerCase().trim()
+    return pages.filter((p) => {
+      const label = resolveLabel(p).toLowerCase()
+      const key = (p.page_key || "").toLowerCase()
+      const slug = (resolveSlug(p) || "").toLowerCase()
+      const title = (p.meta_title || "").toLowerCase()
+      const kw = (p.primary_keyword || "").toLowerCase()
+      return (
+        label.includes(q) ||
+        key.includes(q) ||
+        slug.includes(q) ||
+        title.includes(q) ||
+        kw.includes(q)
+      )
+    })
+  }, [pages, searchQuery])
+
+  // Edit modal state
+  const [editingPage, setEditingPage] = useState<PageRecord | null>(null)
+  const [deletingPage, setDeletingPage] = useState<PageRecord | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // New page modal
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [creatingPage, setCreatingPage] = useState(false)
+  const [newPage, setNewPage] = useState({
+    title: "",
+    slug: "",
+    meta_title: "",
+    meta_description: "",
+    primary_keyword: "",
+    robots_index: true,
+    robots_follow: true,
   })
 
-  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
-  const [orgProfileJson, setOrgProfileJson] = useState("")
-
-  const [seoList, setSeoList] = useState<any[]>([])
-  const [selectedSeo, setSelectedSeo] = useState<any>(null)
-  const [savingSite, setSavingSite] = useState(false)
-  const [savingSeo, setSavingSeo] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  const [keywords, setKeywords] = useState<any[]>([])
-  const [newKeyword, setNewKeyword] = useState({ keyword: "", target_url: "", max_matches_per_page: 1 })
-  const [savingKeyword, setSavingKeyword] = useState(false)
-  const [runningAiJob, setRunningAiJob] = useState(false)
-  const [aiJobResult, setAiJobResult] = useState<any>(null)
-
-  async function runAiSeoJob(force = false) {
-    setRunningAiJob(true)
-    setAiJobResult(null)
+  async function loadPages() {
     try {
-      const res = await fetch("/api/admin/jobs/seo-auto-fill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ force, limit: 100 }),
-      })
+      const res = await fetch("/api/admin/seo")
       const data = await res.json()
-      setAiJobResult(data)
-      if (res.ok) {
-        const updated = await fetch("/api/admin/seo").then((r) => r.json())
-        if (updated?.settings) setSeoList(updated.settings)
-      }
-    } catch {
-      setAiJobResult({ success: false, message: "Network request failed." })
+      const dbSettings: PageRecord[] = Array.isArray(data?.settings) ? data.settings : []
+
+      const map = new Map<string, PageRecord>()
+      CORE_PAGES.forEach((cp) => {
+        map.set(cp.page_key, { ...cp, robots_index: true, robots_follow: true })
+      })
+
+      dbSettings.forEach((dbItem) => {
+        const existing = map.get(dbItem.page_key)
+        if (existing) {
+          map.set(dbItem.page_key, {
+            ...existing,
+            ...dbItem,
+            slug: dbItem.slug || existing.slug,
+            page_label: dbItem.page_label || existing.page_label,
+          })
+        } else {
+          map.set(dbItem.page_key, {
+            ...dbItem,
+            page_label: resolveLabel(dbItem),
+            slug: resolveSlug(dbItem),
+          })
+        }
+      })
+
+      const list = Array.from(map.values())
+      const coreKeys = new Set(CORE_PAGES.map((c) => c.page_key))
+      const core = list.filter((p) => coreKeys.has(p.page_key))
+      const others = list
+        .filter((p) => !coreKeys.has(p.page_key))
+        .filter((p) => {
+          const k = (p.page_key || "").toLowerCase().trim()
+          const s = (p.slug || "").toLowerCase().trim()
+          return !k.startsWith("blog:") && !s.startsWith("/blog/")
+        })
+        .sort((a, b) => resolveLabel(a).localeCompare(resolveLabel(b)))
+
+      const finalList = [...core, ...others]
+      setPages(finalList)
+      setAdminCache("admin_pages", finalList)
+    } catch (err) {
+      console.error("Failed to load pages:", err)
+      setPages(CORE_PAGES)
+      setAdminCache("admin_pages", CORE_PAGES)
     } finally {
-      setRunningAiJob(false)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/seo/site").then((r) => r.json()),
-      fetch("/api/admin/seo").then((r) => r.json()),
-      fetch("/api/admin/keywords").then((r) => r.json()).catch(() => null),
-      fetch("/api/auth/me").then((r) => r.json()).catch(() => null),
-    ])
-      .then(([siteData, seoData, keywordsData, authData]) => {
-        if (siteData?.setting) {
-          setSiteForm({
-            site_name: "",
-            site_url: "",
-            logo_url: "",
-            favicon_url: "",
-            brand_name: "",
-            custom_admin_path: "",
-            ...siteData.setting
-          })
-          if (siteData.setting.organization_profile) {
-            try {
-              const val = typeof siteData.setting.organization_profile === "string"
-                ? JSON.parse(siteData.setting.organization_profile)
-                : siteData.setting.organization_profile
-              setOrgProfileJson(JSON.stringify(val, null, 2))
-            } catch {
-              setOrgProfileJson(String(siteData.setting.organization_profile))
-            }
-          }
-        }
-        if (seoData?.settings) setSeoList(seoData.settings)
-        if (keywordsData?.keywords) setKeywords(keywordsData.keywords)
-        if (authData?.role) setCurrentUserRole(authData.role)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error(err)
-        setLoading(false)
-      })
+    const cachedPages = getAdminCache<PageRecord[]>("admin_pages")
+    if (cachedPages && cachedPages.length > 0) {
+      setPages(cachedPages)
+    }
+    loadPages()
   }, [])
 
-  async function deleteKeyword(id: string) {
-    if (!confirm("Are you sure you want to delete this keyword?")) return
-    try {
-      const res = await fetch(`/api/admin/keywords/${id}`, { method: "DELETE" })
-      if (res.ok) {
-        setKeywords(keywords.filter((k) => k.id !== id))
-      } else {
-        alert("Failed to delete keyword")
-      }
-    } catch {
-      alert("Network error")
+  function openEditModal(page: PageRecord) {
+    const slug = resolveSlug(page)
+    const label = resolveLabel(page)
+    const pageKey = (page.page_key || "").toLowerCase()
+
+    let initialFaqs = page.faq_section || []
+    if ((!initialFaqs || initialFaqs.length === 0) && (pageKey === "homepage" || pageKey === "home")) {
+      initialFaqs = HOME_FAQS.map((f) => ({ question: f.question, answer: f.answer }))
     }
+
+    setEditingPage({
+      ...page,
+      slug,
+      page_label: label,
+      faq_section: initialFaqs,
+    })
   }
 
-  async function addKeyword(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newKeyword.keyword || !newKeyword.target_url) return
-    setSavingKeyword(true)
+  async function handleConfirmDelete() {
+    if (!deletingPage) return
+    setIsDeleting(true)
+    setDeleteError(null)
+
+    const isCore = CORE_PAGES.some((c) => c.page_key === deletingPage.page_key)
+
     try {
-      const res = await fetch("/api/admin/keywords", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newKeyword),
+      const res = await fetch(`/api/admin/seo?page_key=${encodeURIComponent(deletingPage.page_key)}`, {
+        method: "DELETE",
       })
       if (res.ok) {
-        const data = await res.json()
-        if (data?.keyword) {
-          setKeywords([...keywords, data.keyword].sort((a, b) => a.keyword.localeCompare(b.keyword)))
-          setNewKeyword({ keyword: "", target_url: "", max_matches_per_page: 1 })
+        if (isCore) {
+          await loadPages()
+        } else {
+          setPages((prev) => prev.filter((p) => p.page_key !== deletingPage.page_key))
         }
+        setDeletingPage(null)
       } else {
-        const data = await res.json()
-        alert(data.error || "Failed to add keyword")
+        const d = await res.json().catch(() => null)
+        setDeleteError(d?.error || "Failed to delete page")
       }
     } catch {
-      alert("Network error")
+      setDeleteError("Network error while deleting page")
     } finally {
-      setSavingKeyword(false)
+      setIsDeleting(false)
     }
   }
 
-  async function saveSiteSettings(e: React.FormEvent) {
+  async function handleCreatePage(e: React.FormEvent) {
     e.preventDefault()
-    let parsedOrgProfile = null
-    if (orgProfileJson.trim()) {
-      try {
-        parsedOrgProfile = JSON.parse(orgProfileJson.trim())
-      } catch (err: any) {
-        alert("Invalid JSON in Organization Profile: " + (err?.message || "Syntax error"))
-        return
-      }
-    }
+    if (!newPage.title.trim()) return
 
-    setSavingSite(true)
-    try {
-      const res = await fetch("/api/admin/seo/site", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...siteForm,
-          organization_profile: parsedOrgProfile,
-        }),
-      })
-      if (res.ok) {
-        alert("Site settings saved successfully!")
-      } else {
-        const data = await res.json().catch(() => null)
-        alert(data?.error || "Failed to save site settings")
-      }
-    } catch {
-      alert("Network error")
-    } finally {
-      setSavingSite(false)
-    }
-  }
+    const sanitized = (newPage.slug || newPage.title)
+      .trim()
+      .toLowerCase()
+      .replace(/^[/\s]+|[/\s]+$/g, "")
+      .replace(/[\s_]+/g, "-")
 
-  async function saveSeoSetting(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selectedSeo) return
-    setSavingSeo(true)
+    setCreatingPage(true)
     try {
+      const payload = {
+        page_key: sanitized,
+        page_label: newPage.title.trim(),
+        slug: `/${sanitized}`,
+        meta_title: newPage.meta_title.trim() || newPage.title.trim(),
+        meta_description: newPage.meta_description.trim() || null,
+        primary_keyword: newPage.primary_keyword.trim() || null,
+        robots_index: newPage.robots_index,
+        robots_follow: newPage.robots_follow,
+      }
+
       const res = await fetch("/api/admin/seo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedSeo),
+        body: JSON.stringify(payload),
       })
+
       if (res.ok) {
-        alert("SEO tags updated successfully!")
-        // Refresh SEO settings list
-        const updated = await fetch("/api/admin/seo").then((r) => r.json())
-        if (updated?.settings) setSeoList(updated.settings)
+        await loadPages()
+        setShowNewModal(false)
+        setNewPage({
+          title: "",
+          slug: "",
+          meta_title: "",
+          meta_description: "",
+          primary_keyword: "",
+          robots_index: true,
+          robots_follow: true,
+        })
       } else {
-        const data = await res.json().catch(() => null)
-        alert(data?.error || "Failed to save SEO tags")
+        const d = await res.json().catch(() => null)
+        alert(d?.error || "Failed to create page")
       }
     } catch {
-      alert("Network error")
+      alert("Network error while creating page")
     } finally {
-      setSavingSeo(false)
+      setCreatingPage(false)
     }
   }
 
   const inputClass =
-    "w-full rounded-[12px] border border-[#1f2937] bg-[#111827] px-4 py-3 text-[14px] text-white outline-none transition-all placeholder:text-slate-500 focus:border-[#374151]"
+    "w-full rounded-[10px] border border-[#1f2937] bg-[#0b0f17] px-4 py-2.5 text-[13px] text-white outline-none transition-all placeholder:text-slate-500 focus:border-[#e61e73]"
   const labelClass =
-    "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.05em] text-[#e2e8f0]"
+    "mb-1 block text-[11px] font-bold uppercase tracking-[0.05em] text-slate-400"
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center text-slate-400">
-        Loading settings...
-      </div>
-    )
-  }
+  const activeBadges = editingPage ? getActiveSchemaBadges(editingPage.page_key) : []
 
   return (
-    <div className="text-slate-200">
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          SEO & Site Settings
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Configure site-wide metadata, titles, and automated AI SEO generation
-        </p>
-      </div>
-
-      {/* AI SEO Generator Card */}
-      <div className="mt-6 rounded-[18px] border border-[#e61e73]/30 bg-gradient-to-r from-[#111827] via-[#1a1024] to-[#111827] p-6 shadow-lg">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#e61e73]/20 px-3 py-1 text-[12px] font-bold text-[#ef6a99]">
-              ✨ AI SEO Auto-Fill (GPT-4o-mini & Answer The Public)
-            </div>
-            <h2 className="mt-2 text-[18px] font-bold text-white">
-              Automated AI SEO Metadata & FAQ Generator
-            </h2>
-            <p className="text-[13px] text-slate-400">
-              Scans products, blogs, and categories. Generates meta titles (&lt; 60 chars), meta descriptions (150-160 chars), keywords, social tags, reading times, and search-intent FAQs.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 sm:flex-shrink-0">
-            <button
-              type="button"
-              disabled={runningAiJob}
-              onClick={() => runAiSeoJob(false)}
-              className="rounded-[12px] bg-[#e61e73] px-5 py-3 text-[13px] font-extrabold text-white transition-all hover:bg-[#ca155f] disabled:opacity-50"
-            >
-              {runningAiJob ? "Running AI Generator..." : "✨ Run AI Auto-Fill"}
-            </button>
-            <button
-              type="button"
-              disabled={runningAiJob}
-              onClick={() => runAiSeoJob(true)}
-              className="rounded-[12px] border border-[#1f2937] bg-[#1f2937] px-4 py-3 text-[13px] font-bold text-slate-300 transition-all hover:bg-slate-800 disabled:opacity-50"
-            >
-              ⚡ Force Overwrite All
-            </button>
-          </div>
+    <div className="pb-16">
+      {/* ── Page Header (Identical to Services) ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">Pages</h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {pages.length} pages total • Click any page to edit all schemas & SEO
+          </p>
         </div>
-        {aiJobResult && (
-          <div className="mt-4 rounded-[12px] border border-[#1f2937] bg-[#0b0f17] p-4 text-[13px] text-slate-300">
-            <p className="font-semibold text-emerald-400">Status: {aiJobResult.message}</p>
-            {aiJobResult.data?.errors?.length > 0 && (
-              <ul className="mt-2 space-y-1 text-[12px] text-rose-400">
-                {aiJobResult.data.errors.map((err: string, i: number) => (
-                  <li key={i}>• {err}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          <AdminSearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search pages..."
+          />
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f] transition-all shrink-0 h-[38px] flex items-center justify-center"
+          >
+            + New Page
+          </button>
+        </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        {/* Left Column */}
-        <div className="space-y-6 h-fit">
-          {/* Site Settings */}
-          <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937]">
-            <h2 className="text-[16px] font-extrabold text-white mb-4">
-              Site Settings
-            </h2>
-            <form onSubmit={saveSiteSettings} className="space-y-4">
-              <div>
-                <label className={labelClass}>Site Name</label>
-                <input
-                  type="text"
-                  value={siteForm.site_name || ""}
-                  onChange={(e) => setSiteForm({ ...siteForm, site_name: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Brand Name</label>
-                <input
-                  type="text"
-                  value={siteForm.brand_name || ""}
-                  onChange={(e) => setSiteForm({ ...siteForm, brand_name: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Site URL</label>
-                <input
-                  type="text"
-                  value={siteForm.site_url || ""}
-                  onChange={(e) => setSiteForm({ ...siteForm, site_url: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-              {currentUserRole === "admin" && (
-                <div>
-                  <label className={labelClass}>Custom Admin Path</label>
-                  <input
-                    type="text"
-                    value={siteForm.custom_admin_path || ""}
-                    onChange={(e) => setSiteForm({ ...siteForm, custom_admin_path: e.target.value })}
-                    placeholder="e.g. secret-momentum (blank defaults to admin)"
-                    className={inputClass}
-                  />
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Warning: Changing this path changes the URL used to access the dashboard. Default is 'admin'.
-                  </p>
-                </div>
-              )}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className={labelClass}>Logo URL</label>
-                  <input
-                    type="text"
-                    value={siteForm.logo_url || ""}
-                    onChange={(e) => setSiteForm({ ...siteForm, logo_url: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Favicon URL</label>
-                  <input
-                    type="text"
-                    value={siteForm.favicon_url || ""}
-                    onChange={(e) => setSiteForm({ ...siteForm, favicon_url: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <div className="pt-2 border-t border-[#1f2937]">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className={labelClass}>Organization Profile (JSON-LD Override)</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      try {
-                        if (!orgProfileJson.trim()) return
-                        const parsed = JSON.parse(orgProfileJson)
-                        setOrgProfileJson(JSON.stringify(parsed, null, 2))
-                      } catch (e: any) {
-                        alert("Invalid JSON: " + (e?.message || "Syntax error"))
-                      }
-                    }}
-                    className="text-[11px] text-[#e61e73] hover:text-[#ff3e8d] font-semibold"
+      {/* ── Content Table (Identical to Services) ── */}
+      {loading ? (
+        <div className="mt-16 text-center text-slate-400">Loading pages...</div>
+      ) : pages.length === 0 ? (
+        <div className="mt-16 text-center rounded-[18px] bg-[#111827] p-12 border border-[#1f2937]">
+          <p className="text-slate-400">No pages found.</p>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="mt-4 inline-block rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white"
+          >
+            Create your first page
+          </button>
+        </div>
+      ) : filteredPages.length === 0 ? (
+        <AdminEmptySearch
+          query={searchQuery}
+          onClear={() => setSearchQuery("")}
+          label="pages"
+        />
+      ) : (
+        <div className="mt-8 overflow-hidden rounded-[18px] border border-[#1f2937] bg-[#111827]">
+          <table className="w-full border-collapse text-left text-[13px]">
+            <thead>
+              <tr className="border-b border-[#1f2937] text-[11px] font-bold uppercase tracking-[0.05em] text-slate-400">
+                <th className="p-4">Page Name</th>
+                <th className="p-4">Slug</th>
+                <th className="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1f2937]">
+              {filteredPages.map((page) => {
+                const label = resolveLabel(page)
+                const slug = resolveSlug(page)
+                const badges = getActiveSchemaBadges(page.page_key)
+                return (
+                  <tr
+                    key={page.page_key}
+                    onClick={() => openEditModal(page)}
+                    className="hover:bg-[#1f2937]/40 transition-colors cursor-pointer group"
                   >
-                    Format JSON
-                  </button>
-                </div>
-                <textarea
-                  rows={6}
-                  value={orgProfileJson}
-                  onChange={(e) => setOrgProfileJson(e.target.value)}
-                  placeholder={`{\n  "legalName": "Mommantum",\n  "telephone": "+917742276031",\n  "email": "kuldeep@mommantum.in"\n}`}
-                  className={`${inputClass} font-mono text-[12px] leading-relaxed`}
-                />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Optional structured schema overrides (legalName, founders, address, social sameAs) applied site-wide.
+                    <td className="p-4 font-semibold text-white">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[14px] text-white group-hover:text-[#e61e73] transition-colors">
+                            {label}
+                          </span>
+                          {page.robots_index === false && (
+                            <span className="rounded bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-bold text-rose-400 border border-rose-500/20">
+                              noindex
+                            </span>
+                          )}
+                          {page.schema_json && (
+                            <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-bold text-indigo-400 border border-indigo-500/20">
+                              custom schema
+                            </span>
+                          )}
+                        </div>
+                        {/* Schema tags summary */}
+                        <div className="flex flex-wrap items-center gap-1">
+                          {badges.slice(0, 4).map((b) => (
+                            <span
+                              key={b}
+                              className="rounded bg-[#1f2937] px-1.5 py-0.5 text-[10px] font-medium text-slate-400 border border-slate-700/50"
+                            >
+                              {b}
+                            </span>
+                          ))}
+                          {badges.length > 4 && (
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              +{badges.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-slate-400 font-mono text-[12px]">
+                      {slug}
+                    </td>
+                    <td className="p-4 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openEditModal(page)
+                        }}
+                        className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-white hover:border-[#374151] hover:bg-[#1f2937] transition-all"
+                      >
+                        Edit
+                      </button>
+                      <a
+                        href={slug}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-slate-400 hover:text-slate-300 transition-all"
+                      >
+                        View ↗
+                      </a>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteError(null)
+                          setDeletingPage(page)
+                        }}
+                        className="rounded-[8px] border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[12px] font-semibold text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Complete Schema & SEO Edit Full Screen View ── */}
+      {editingPage && (
+        <SharedEntityEditor
+          pageKey={editingPage.page_key}
+          entityLabelSingular="Page"
+          entityLabelPlural="Pages"
+          title={editingPage.page_label || resolveLabel(editingPage)}
+          slug={editingPage.slug || resolveSlug(editingPage)}
+          initialSeoData={{
+            canonical_url: editingPage.canonical_url || "",
+            meta_title: editingPage.meta_title || "",
+            meta_description: editingPage.meta_description || "",
+            primary_keyword: editingPage.primary_keyword || "",
+            secondary_keywords: Array.isArray(editingPage.secondary_keywords)
+              ? editingPage.secondary_keywords.join(", ")
+              : editingPage.secondary_keywords || "",
+            robots_index: editingPage.robots_index !== false,
+            robots_follow: editingPage.robots_follow !== false,
+            og_title: editingPage.og_title || "",
+            og_description: editingPage.og_description || "",
+            og_image: editingPage.og_image || "",
+            og_type: editingPage.og_type || "website",
+            twitter_card: editingPage.twitter_card || "summary_large_image",
+            twitter_title: editingPage.twitter_title || "",
+            twitter_description: editingPage.twitter_description || "",
+            schema_json: editingPage.schema_json || "",
+          }}
+          initialFaqs={editingPage.faq_section || []}
+          hasContentTab={false}
+          onClose={() => setEditingPage(null)}
+          onSave={async ({ seoData, faqs }) => {
+            const secondaryKeywordsArray =
+              typeof seoData.secondary_keywords === "string"
+                ? seoData.secondary_keywords
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                : seoData.secondary_keywords || []
+
+            const cleanFaqs = (faqs || []).filter(
+              (f) => f.question?.trim() || f.answer?.trim()
+            )
+
+            const payload = {
+              ...editingPage,
+              page_label: editingPage.page_label || resolveLabel(editingPage),
+              slug: editingPage.slug || resolveSlug(editingPage),
+              canonical_url: seoData.canonical_url?.trim() || null,
+              meta_title: seoData.meta_title?.trim() || null,
+              meta_description: seoData.meta_description?.trim() || null,
+              primary_keyword: seoData.primary_keyword?.trim() || null,
+              secondary_keywords: secondaryKeywordsArray.length ? secondaryKeywordsArray : null,
+              robots_index: seoData.robots_index,
+              robots_follow: seoData.robots_follow,
+              og_title: seoData.og_title?.trim() || null,
+              og_description: seoData.og_description?.trim() || null,
+              og_image: seoData.og_image?.trim() || null,
+              og_type: seoData.og_type || "website",
+              twitter_card: seoData.twitter_card || "summary_large_image",
+              twitter_title: seoData.twitter_title?.trim() || null,
+              twitter_description: seoData.twitter_description?.trim() || null,
+              schema_json: seoData.schema_json?.trim() || null,
+              faq_section: cleanFaqs.length ? cleanFaqs : null,
+            }
+
+            const res = await fetch("/api/admin/seo", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            })
+
+            if (res.ok) {
+              await loadPages()
+              return true
+            } else {
+              const d = await res.json().catch(() => null)
+              throw new Error(d?.error || "Failed to save page")
+            }
+          }}
+        />
+      )}
+
+      {/* ── New Page Modal ── */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-lg rounded-[18px] border border-[#1f2937] bg-[#111827] p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-[#1f2937]">
+              <div>
+                <h3 className="text-[17px] font-extrabold text-white">Create New Page</h3>
+                <p className="text-[12px] text-slate-400 mt-0.5">
+                  Add a page and configure its URL slug and metadata
                 </p>
               </div>
               <button
-                type="submit"
-                disabled={savingSite}
-                className="w-full h-[44px] rounded-[10px] bg-[#e61e73] text-[13px] font-bold text-white transition-all hover:bg-[#ca155f] disabled:opacity-50"
+                onClick={() => setShowNewModal(false)}
+                className="text-slate-400 hover:text-white transition-colors text-[20px] font-bold p-1"
               >
-                {savingSite ? "Saving..." : "Save Site Settings"}
+                ✕
               </button>
-            </form>
-          </div>
+            </div>
 
-          {/* Keywords Manager */}
-          <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937]">
-            <h2 className="text-[16px] font-extrabold text-white mb-4">
-              Internal Linking Keywords Manager
-            </h2>
-            
-            {/* Inline Add Form */}
-            <form onSubmit={addKeyword} className="space-y-4 mb-6 pb-6 border-b border-[#1f2937]">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className={labelClass}>Keyword</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. AI automation"
-                    value={newKeyword.keyword}
-                    onChange={(e) => setNewKeyword({ ...newKeyword, keyword: e.target.value })}
-                    className={inputClass}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Target URL</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. /services/ai-agentic-service"
-                    value={newKeyword.target_url}
-                    onChange={(e) => setNewKeyword({ ...newKeyword, target_url: e.target.value })}
-                    className={inputClass}
-                    required
-                  />
-                </div>
+            <form onSubmit={handleCreatePage} className="mt-4 space-y-3.5">
+              <div>
+                <label className={labelClass}>Page Title</label>
+                <input
+                  type="text"
+                  value={newPage.title}
+                  onChange={(e) => setNewPage({ ...newPage, title: e.target.value })}
+                  placeholder="e.g. Careers"
+                  className={inputClass}
+                  required
+                />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 items-end">
-                <div>
-                  <label className={labelClass}>Max Matches per Page</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={newKeyword.max_matches_per_page}
-                    onChange={(e) => setNewKeyword({ ...newKeyword, max_matches_per_page: parseInt(e.target.value) || 1 })}
-                    className={inputClass}
-                  />
-                </div>
+
+              <div>
+                <label className={labelClass}>URL Slug</label>
+                <input
+                  type="text"
+                  value={newPage.slug}
+                  onChange={(e) => setNewPage({ ...newPage, slug: e.target.value })}
+                  placeholder="e.g. /careers or careers"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Meta Title</label>
+                <input
+                  type="text"
+                  value={newPage.meta_title}
+                  onChange={(e) => setNewPage({ ...newPage, meta_title: e.target.value })}
+                  placeholder="e.g. Careers at Mommantum"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Meta Description</label>
+                <textarea
+                  rows={3}
+                  value={newPage.meta_description}
+                  onChange={(e) =>
+                    setNewPage({ ...newPage, meta_description: e.target.value })
+                  }
+                  placeholder="Brief description for search engine snippets..."
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Primary Focus Keyword</label>
+                <input
+                  type="text"
+                  value={newPage.primary_keyword}
+                  onChange={(e) =>
+                    setNewPage({ ...newPage, primary_keyword: e.target.value })
+                  }
+                  placeholder="e.g. digital marketing careers"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f2937]">
+                <button
+                  type="button"
+                  onClick={() => setShowNewModal(false)}
+                  className="rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-4 py-2 text-[12px] font-semibold text-slate-300 hover:text-white transition-all"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={savingKeyword}
-                  className="w-full h-[44px] rounded-[10px] bg-[#e61e73] text-[13px] font-bold text-white transition-all hover:bg-[#ca155f] disabled:opacity-50"
+                  disabled={creatingPage}
+                  className="rounded-[10px] bg-[#e61e73] px-5 py-2 text-[12px] font-bold text-white hover:bg-[#ca155f] transition-all disabled:opacity-50"
                 >
-                  {savingKeyword ? "Adding..." : "Add Keyword"}
+                  {creatingPage ? "Creating..." : "Create Page"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
 
-            {/* Keyword List */}
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-              <h3 className={labelClass}>Active Keywords ({keywords.length})</h3>
-              {keywords.length === 0 ? (
-                <p className="text-[13px] text-slate-500 italic">No linking keywords added yet.</p>
+      {/* ── Delete Confirmation Modal ── */}
+      {deletingPage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-[18px] border border-[#1f2937] bg-[#111827] p-6 shadow-2xl">
+            <h3 className="text-[17px] font-extrabold text-white">
+              {CORE_PAGES.some((c) => c.page_key === deletingPage.page_key) ? "Reset SEO Overrides" : "Delete Page"}
+            </h3>
+            <p className="mt-2 text-[13px] text-slate-300">
+              {CORE_PAGES.some((c) => c.page_key === deletingPage.page_key) ? (
+                <>Reset SEO overrides for <span className="text-white font-bold">&quot;{resolveLabel(deletingPage)}&quot;</span>? This restores default page configuration.</>
               ) : (
-                <div className="divide-y divide-[#1f2937]">
-                  {keywords.map((kw) => (
-                    <div key={kw.id} className="py-2.5 flex items-center justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[14px] font-semibold text-white truncate">
-                          {kw.keyword}
-                        </div>
-                        <div className="text-[12px] text-slate-400 truncate mt-0.5">
-                          {kw.target_url} <span className="text-slate-500">• max: {kw.max_matches_per_page}</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => deleteKeyword(kw.id)}
-                        className="text-slate-400 hover:text-red-500 text-[13px] transition-colors p-1"
-                        title="Delete keyword"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <>Are you sure you want to delete <span className="text-white font-bold">&quot;{resolveLabel(deletingPage)}&quot;</span>? This cannot be undone.</>
               )}
+            </p>
+
+            {deleteError && (
+              <div className="mt-3 rounded-[8px] bg-red-500/10 border border-red-500/30 p-2.5 text-[12px] text-red-400">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingPage(null)
+                  setDeleteError(null)
+                }}
+                disabled={isDeleting}
+                className="rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-4 py-2 text-[12px] font-semibold text-slate-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="rounded-[8px] bg-red-600 hover:bg-red-700 px-4 py-2 text-[12px] font-bold text-white transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting && (
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                <span>
+                  {isDeleting
+                    ? "Processing..."
+                    : CORE_PAGES.some((c) => c.page_key === deletingPage.page_key)
+                    ? "Reset Overrides"
+                    : "Delete Page"}
+                </span>
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Right: Page-by-page SEO */}
-        <div className="space-y-6">
-          {/* List of Pages */}
-          <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937]">
-            <h2 className="text-[16px] font-extrabold text-white mb-4">
-              Page Meta Settings (SEO)
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {seoList.map((item) => (
-                <button
-                  key={item.page_key}
-                  onClick={() => setSelectedSeo(item)}
-                  className={`rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition-all border ${
-                    selectedSeo?.page_key === item.page_key
-                      ? "bg-[#e61e73] text-white border-transparent"
-                      : "bg-[#1f2937] text-slate-300 border-[#374151] hover:text-white"
-                  }`}
-                >
-                  {item.page_label || item.page_key}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Edit form for Selected Page */}
-          {selectedSeo && (
-            <div className="rounded-[18px] bg-[#111827] p-6 border border-[#1f2937]">
-              <h3 className="text-[15px] font-bold text-white mb-4">
-                Editing: {selectedSeo.page_label || selectedSeo.page_key}
-              </h3>
-              <form onSubmit={saveSeoSetting} className="space-y-4">
-                <div>
-                  <label className={labelClass}>Meta Title</label>
-                  <input
-                    type="text"
-                    value={selectedSeo.meta_title || ""}
-                    onChange={(e) => setSelectedSeo({ ...selectedSeo, meta_title: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Meta Description</label>
-                  <textarea
-                    value={selectedSeo.meta_description || ""}
-                    onChange={(e) => setSelectedSeo({ ...selectedSeo, meta_description: e.target.value })}
-                    rows={3}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Canonical Slug Override</label>
-                  <input
-                    type="text"
-                    value={selectedSeo.slug || ""}
-                    onChange={(e) => setSelectedSeo({ ...selectedSeo, slug: e.target.value })}
-                    placeholder="e.g. /about (blank defaults to actual path)"
-                    className={inputClass}
-                  />
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelClass}>Robots Index</label>
-                    <select
-                      value={selectedSeo.robots_index === false ? "false" : "true"}
-                      onChange={(e) => setSelectedSeo({ ...selectedSeo, robots_index: e.target.value === "true" })}
-                      className={inputClass}
-                    >
-                      <option value="true">Index</option>
-                      <option value="false">No-Index</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Robots Follow</label>
-                    <select
-                      value={selectedSeo.robots_follow === false ? "false" : "true"}
-                      onChange={(e) => setSelectedSeo({ ...selectedSeo, robots_follow: e.target.value === "true" })}
-                      className={inputClass}
-                    >
-                      <option value="true">Follow</option>
-                      <option value="false">No-Follow</option>
-                    </select>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={savingSeo}
-                  className="w-full h-[44px] rounded-[10px] bg-[#e61e73] text-[13px] font-bold text-white transition-all hover:bg-[#ca155f] disabled:opacity-50"
-                >
-                  {savingSeo ? "Saving..." : "Save SEO Details"}
-                </button>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   )
 }

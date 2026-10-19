@@ -87,14 +87,16 @@ export default function AdminInventoryPage() {
   })
 
   return (
-    <div className="text-slate-200">
-      <div>
-        <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
-          Inventory
-        </h1>
-        <p className="mt-1 text-[14px] text-slate-400">
-          Manage variant inventory stock levels across all storefront products
-        </p>
+    <div className="pb-16 text-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
+            Inventory
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-400">
+            {inventoryItems.length} variants total • Manage variant inventory stock levels across all products
+          </p>
+        </div>
       </div>
 
       {loading ? (

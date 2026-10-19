@@ -14,6 +14,11 @@ const getBackendUrl = () => {
 }
 
 export default function KeepAlive() {
+  // In development, do not poll backend or send keep-alive requests
+  if (process.env.NODE_ENV !== "production") {
+    return null
+  }
+
   useEffect(() => {
     let isComponentMounted = true
 

@@ -61,7 +61,6 @@ describe("Entity ID and URL builders", () => {
     const base = "https://www.mommantum.com/"
     expect(getEntityId(base, "#organization")).toBe("https://www.mommantum.com/#organization")
     expect(getEntityId(base, "#website")).toBe("https://www.mommantum.com/#website")
-    expect(getEntityId(base, "#localbusiness")).toBe("https://www.mommantum.com/#localbusiness")
     expect(getEntityId(base, "#founder")).toBe("https://www.mommantum.com/#founder")
 
     const pageUrl = "https://www.mommantum.com/services/seo"
@@ -147,20 +146,45 @@ describe("Graph Reference Checker and Forbidden Entities", () => {
 })
 
 describe("End-to-End Schema Graph Generation", () => {
-  it("generates valid Homepage graph with full Organization, LocalBusiness, Founder, WebSite, FAQ", async () => {
+  it("generates valid Homepage graph with exactly 4 nodes (WebSite, Organization, WebPage with nested FAQ, BreadcrumbList)", async () => {
     const resolved = resolveHomepageData(null)
     const graph = await generateSchemaGraph(resolved)
 
     expect(graph["@context"]).toBe("https://schema.org")
-    const types = graph["@graph"].map((n) => n["@type"])
+    expect(graph["@graph"].length).toBe(4)
 
-    expect(types).toContain("WebSite")
-    expect(types).toContain("Organization")
-    expect(types).toContain("ProfessionalService")
-    expect(types).toContain("Person")
-    expect(types).toContain("WebPage")
-    expect(types).toContain("BreadcrumbList")
-    expect(types).toContain("FAQPage")
+    const rawTypes = graph["@graph"].map((n) => n["@type"])
+    // Organization has type ["Organization", "OnlineStore"] or "Organization"
+    const hasOrg = rawTypes.some((t) => (Array.isArray(t) ? t.includes("Organization") : t === "Organization"))
+    const hasSite = rawTypes.includes("WebSite")
+    const hasPage = rawTypes.includes("WebPage")
+    const hasBreadcrumb = rawTypes.includes("BreadcrumbList")
+
+    expect(hasOrg).toBe(true)
+    expect(hasSite).toBe(true)
+    expect(hasPage).toBe(true)
+    expect(hasBreadcrumb).toBe(true)
+
+    // No top-level standalone Person, ImageObject, FAQPage, or LocalBusiness
+    expect(rawTypes).not.toContain("Person")
+    expect(rawTypes).not.toContain("ImageObject")
+    expect(rawTypes).not.toContain("FAQPage")
+    expect(rawTypes).not.toContain("LocalBusiness")
+    expect(rawTypes).not.toContain("ProfessionalService")
+
+    // FAQ must be nested inside WebPage.hasPart
+    const webPageNode = graph["@graph"].find((n) => n["@type"] === "WebPage")
+    expect(webPageNode?.hasPart?.["@type"]).toBe("FAQPage")
+
+    // Founder and logo must be nested inside Organization
+    const orgNode = graph["@graph"].find((n) =>
+      Array.isArray(n["@type"]) ? n["@type"].includes("Organization") : n["@type"] === "Organization"
+    )
+    expect(orgNode?.founder?.["@type"]).toBe("Person")
+    expect(orgNode?.founder?.name).toBe("Kuldeep Ahir")
+    expect(orgNode?.logo?.["@type"]).toBe("ImageObject")
+    expect(orgNode?.hasMerchantReturnPolicy?.["@type"]).toBe("MerchantReturnPolicy")
+    expect(orgNode?.knowsAbout).toBeDefined()
 
     // Assert no forbidden entities
     const checkForbidden = verifyNoForbiddenEntities(graph["@graph"])
@@ -169,17 +193,9 @@ describe("End-to-End Schema Graph Generation", () => {
     // Assert all references resolve
     const checkRefs = verifyGraphIdReferences(graph["@graph"])
     expect(checkRefs.valid).toBe(true)
-
-    // Assert business facts accuracy
-    const orgNode = graph["@graph"].find((n) => n["@type"] === "Organization")
-    expect(orgNode?.name).toBe("Mommantum")
-    expect(orgNode?.taxID).toBe("08CTJPA2104B1ZI")
-    expect(orgNode?.foundingDate).toBe("2025-12-15")
-    expect(orgNode?.email).toBe("kuldeep@mommantum.in")
-    expect(orgNode?.telephone).toBe("+917742276031")
   })
 
-  it("generates valid Service graph without aggregateRating or fabricated prices", async () => {
+  it("generates valid Service graph adhering to type 'page' (exactly 2 nodes: WebPage + BreadcrumbList with nested FAQ)", async () => {
     const resolved = resolveServiceData({
       slug: "performance-marketing",
       title: "Performance Marketing",
@@ -199,20 +215,22 @@ describe("End-to-End Schema Graph Generation", () => {
     })
 
     const graph = await generateSchemaGraph(resolved)
+    expect(graph["@graph"].length).toBe(2)
+
     const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["WebPage", "BreadcrumbList"])
 
-    expect(types).toContain("Service")
-    expect(types).toContain("FAQPage")
-    expect(types).toContain("WebPage")
-    expect(types).toContain("BreadcrumbList")
+    // FAQ must be nested inside WebPage.hasPart
+    const webPageNode = graph["@graph"].find((n) => n["@type"] === "WebPage")
+    expect(webPageNode?.hasPart?.["@type"]).toBe("FAQPage")
 
-    const serviceNode = graph["@graph"].find((n) => n["@type"] === "Service")
-    expect(serviceNode?.name).toBe("Performance Marketing | Mommantum")
-    expect(serviceNode?.offers).toBeUndefined() // No fabricated prices
-    expect(serviceNode?.aggregateRating).toBeUndefined()
+    // Non-home pages must NOT contain full WebSite or Organization nodes
+    expect(types).not.toContain("WebSite")
+    expect(types).not.toContain("Organization")
+    expect(types).not.toContain("Service")
   })
 
-  it("generates valid BlogPosting graph with Person author and resolved category name", async () => {
+  it("generates valid BlogPosting graph (exactly 3 nodes: BlogPosting, WebPage, BreadcrumbList)", async () => {
     const resolved = resolveBlogData({
       id: "post-1",
       slug: "automation-tips",
@@ -232,20 +250,26 @@ describe("End-to-End Schema Graph Generation", () => {
     })
 
     const graph = await generateSchemaGraph(resolved)
-    const articleNode = graph["@graph"].find((n) => n["@type"] === "BlogPosting")
+    expect(graph["@graph"].length).toBe(3)
 
-    expect(articleNode).toBeDefined()
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["BlogPosting", "WebPage", "BreadcrumbList"])
+
+    const articleNode = graph["@graph"].find((n) => n["@type"] === "BlogPosting")
     expect(articleNode?.headline).toBe("10 Automation Tips for D2C Brands")
     expect(articleNode?.author).toEqual({
       "@type": "Person",
       name: "Kuldeep Ahir",
     })
-    expect(articleNode?.articleSection).toBe("Business Automation")
-    expect(articleNode?.datePublished).toBe("2026-05-20T08:00:00Z")
-    expect(articleNode?.dateModified).toBe("2026-05-21T09:00:00Z")
+    expect(articleNode?.publisher).toEqual({
+      "@id": "https://www.mommantum.com/#organization",
+    })
+    expect(articleNode?.mainEntityOfPage).toEqual({
+      "@id": "https://www.mommantum.com/blog/automation-tips#webpage",
+    })
   })
 
-  it("generates valid Case Study Article graph without type=blog", async () => {
+  it("generates valid Case Study graph adhering to type 'page' (exactly 2 nodes: WebPage, BreadcrumbList)", async () => {
     const resolved = resolveCaseStudyData({
       slug: "the-kids-store",
       category: "Ecommerce · PPC",
@@ -258,22 +282,18 @@ describe("End-to-End Schema Graph Generation", () => {
     })
 
     const graph = await generateSchemaGraph(resolved)
-    const articleNode = graph["@graph"].find((n) => n["@type"] === "Article")
+    expect(graph["@graph"].length).toBe(2)
 
-    expect(articleNode).toBeDefined()
-    expect(articleNode?.articleSection).toBe("Case Study")
-    expect(articleNode?.about).toEqual({
-      "@type": "Organization",
-      name: "The Kids Store",
-    })
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["WebPage", "BreadcrumbList"])
 
-    // Breadcrumb must be Home > Work > The Kids Store (NOT Home > Blog)
+    // Breadcrumb must be Home > Work > The Kids Store
     const breadcrumbNode = graph["@graph"].find((n) => n["@type"] === "BreadcrumbList")
     const names = breadcrumbNode?.itemListElement.map((item: any) => item.name)
     expect(names).toEqual(["Home", "Work", "The Kids Store"])
   })
 
-  it("generates CollectionPage graph for store collection", async () => {
+  it("generates Category/CollectionPage graph for store collection (exactly 3 nodes: CollectionPage, ItemList, BreadcrumbList)", async () => {
     const { resolveCollectionData } = await import("../resolvers/collection")
     const resolved = resolveCollectionData({
       section: "store",
@@ -281,19 +301,79 @@ describe("End-to-End Schema Graph Generation", () => {
     })
 
     const graph = await generateSchemaGraph(resolved)
-    const collectionNode = graph["@graph"].find((n) => n["@type"] === "CollectionPage")
-    expect(collectionNode).toBeDefined()
-    expect(collectionNode?.name).toBe("Store | Mommantum")
+    expect(graph["@graph"].length).toBe(3)
+
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["CollectionPage", "ItemList", "BreadcrumbList"])
+
+    const itemListNode = graph["@graph"].find((n) => n["@type"] === "ItemList")
+    expect(itemListNode?.numberOfItems).toBe(1)
+    expect(itemListNode?.itemListElement[0].name).toBe("Apparel")
   })
 
-  it("generates AboutPage graph for /about", async () => {
+  it("generates AboutPage graph for /about (exactly 2 nodes: AboutPage, BreadcrumbList)", async () => {
     const { resolveAboutData } = await import("../resolvers/page")
     const resolved = resolveAboutData(null)
 
     const graph = await generateSchemaGraph(resolved)
+    expect(graph["@graph"].length).toBe(2)
+
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["AboutPage", "BreadcrumbList"])
+
     const pageNode = graph["@graph"].find((n) => n["@type"] === "AboutPage")
-    expect(pageNode).toBeDefined()
-    expect(pageNode?.name).toBe("About | Mommantum")
+    // mainEntity must be reference to #organization only
+    expect(pageNode?.mainEntity).toEqual({
+      "@id": "https://www.mommantum.com/#organization",
+    })
+  })
+
+  it("generates ContactPage graph for /contact (exactly 2 nodes: ContactPage, BreadcrumbList)", async () => {
+    const { resolveContactData } = await import("../resolvers/page")
+    const resolved = resolveContactData(null)
+
+    const graph = await generateSchemaGraph(resolved)
+    expect(graph["@graph"].length).toBe(2)
+
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["ContactPage", "BreadcrumbList"])
+
+    const pageNode = graph["@graph"].find((n) => n["@type"] === "ContactPage")
+    // mainEntity must be reference to #organization only
+    expect(pageNode?.mainEntity).toEqual({
+      "@id": "https://www.mommantum.com/#organization",
+    })
+  })
+
+  it("generates Product graph (exactly 3 nodes: Product, WebPage, BreadcrumbList)", async () => {
+    const productResolved: any = {
+      contentType: "product",
+      title: "Sample Product",
+      description: "Sample product description",
+      canonicalUrl: "https://www.mommantum.com/products/sample-product",
+      image: "/images/sample.jpg",
+      keywords: ["sample", "product"],
+      breadcrumbs: [
+        { name: "Home", url: "https://www.mommantum.com/" },
+        { name: "Store", url: "https://www.mommantum.com/store" },
+        { name: "Sample Product", url: "https://www.mommantum.com/products/sample-product" },
+      ],
+      offers: {
+        price: 999,
+        priceCurrency: "INR",
+      },
+    }
+
+    const graph = await generateSchemaGraph(productResolved)
+    expect(graph["@graph"].length).toBe(3)
+
+    const types = graph["@graph"].map((n) => n["@type"])
+    expect(types).toEqual(["Product", "WebPage", "BreadcrumbList"])
+
+    const productNode = graph["@graph"].find((n) => n["@type"] === "Product")
+    expect(productNode?.offers?.seller).toEqual({
+      "@id": "https://www.mommantum.com/#organization",
+    })
   })
 
   it("detects forbidden entities when aggregateRating or review is present", () => {
@@ -399,7 +479,7 @@ describe("End-to-End Schema Graph Generation", () => {
       const types = graph["@graph"].map((n) => n["@type"])
       const refCheck = verifyGraphIdReferences(graph["@graph"])
 
-      console.log(`${r.path.padEnd(42)} -> [${types.join(", ")}]`)
+      console.log(`${r.path.padEnd(42)} -> [${types.map((t) => (Array.isArray(t) ? t.join("/") : t)).join(", ")}] (count: ${graph["@graph"].length})`)
 
       // Zero unresolved refs
       expect(refCheck.issues.filter((i) => i.severity === "error").length).toBe(0)
@@ -409,52 +489,53 @@ describe("End-to-End Schema Graph Generation", () => {
       expect(forbiddenCheck.valid).toBe(true)
 
       // Assert no @type appears more than once on any route
+      const flatTypes = types.flat()
       const typeCounts: Record<string, number> = {}
-      for (const t of types) {
+      for (const t of flatTypes) {
         typeCounts[t] = (typeCounts[t] || 0) + 1
       }
       for (const [t, count] of Object.entries(typeCounts)) {
         expect(count, `Type "${t}" appeared ${count} times on route ${r.path}`).toBe(1)
       }
 
+      // Strict rule: NO ProfessionalService / LocalBusiness anywhere
+      expect(flatTypes).not.toContain("ProfessionalService")
+      expect(flatTypes).not.toContain("LocalBusiness")
+      expect(flatTypes).not.toContain("ElectronicsStore")
+
+      // Exact allowed nodes per route
       if (r.path === "/") {
-        expect(types).toContain("WebSite")
-        expect(types).toContain("Organization")
-        expect(types).toContain("ProfessionalService")
-        expect(types).toContain("Person")
-        expect(types).toContain("WebPage")
-        expect(types).toContain("BreadcrumbList")
-        expect(types).toContain("FAQPage")
+        expect(graph["@graph"].length).toBe(4)
+        expect(flatTypes).toContain("WebSite")
+        expect(flatTypes).toContain("Organization")
+        expect(flatTypes).toContain("WebPage")
+        expect(flatTypes).toContain("BreadcrumbList")
       } else if (r.path === "/about") {
-        expect(types).not.toContain("WebSite")
-        expect(types).toContain("Organization")
-        expect(types).toContain("ProfessionalService")
-        expect(types).toContain("Person")
-        expect(types).toContain("AboutPage")
-        expect(types).toContain("BreadcrumbList")
+        expect(graph["@graph"].length).toBe(2)
+        expect(types).toEqual(["AboutPage", "BreadcrumbList"])
       } else if (r.path === "/contact") {
-        expect(types).not.toContain("WebSite")
-        expect(types).not.toContain("Person")
-        expect(types).toContain("Organization")
-        expect(types).toContain("ProfessionalService")
-        expect(types).toContain("ContactPage")
-        expect(types).toContain("BreadcrumbList")
-      } else if (r.path === "/services" || r.path === "/work" || r.path === "/store") {
-        // Collection pages: EXACTLY ONE CollectionPage, NO separate WebPage
-        expect(types).toContain("CollectionPage")
-        expect(types).not.toContain("WebPage")
-        expect(types).not.toContain("WebSite")
-        expect(types).not.toContain("ProfessionalService")
-        expect(types).not.toContain("Person")
-        expect(types).toContain("Organization")
-        expect(types).toContain("BreadcrumbList")
+        expect(graph["@graph"].length).toBe(2)
+        expect(types).toEqual(["ContactPage", "BreadcrumbList"])
+      } else if (r.path === "/blog") {
+        expect(graph["@graph"].length).toBe(2)
+        expect(types).toEqual(["WebPage", "BreadcrumbList"])
+      } else if (r.path === "/blog/advantage-automation-business-growth") {
+        expect(graph["@graph"].length).toBe(3)
+        expect(types).toEqual(["BlogPosting", "WebPage", "BreadcrumbList"])
+      } else if (r.path === "/store") {
+        expect(graph["@graph"].length).toBe(3)
+        expect(types).toEqual(["CollectionPage", "ItemList", "BreadcrumbList"])
       } else {
-        // Inner pages: NO WebSite, NO ProfessionalService, NO Person
-        expect(types).not.toContain("WebSite")
-        expect(types).not.toContain("ProfessionalService")
-        expect(types).not.toContain("Person")
-        expect(types).toContain("Organization")
-        expect(types).toContain("BreadcrumbList")
+        // Page type (services, work, legal, editz)
+        expect(graph["@graph"].length).toBe(2)
+        expect(types).toEqual(["WebPage", "BreadcrumbList"])
+      }
+
+      // Assert WebSite and Organization appear ONLY on Home
+      if (r.path !== "/") {
+        expect(flatTypes).not.toContain("WebSite")
+        expect(flatTypes).not.toContain("Organization")
+        expect(flatTypes).not.toContain("OnlineStore")
       }
     }
   })

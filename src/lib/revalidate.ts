@@ -96,6 +96,10 @@ export async function revalidateContent(options: RevalidateOptions): Promise<voi
       }
 
       case "seo": {
+        try {
+          const { invalidateSeoMemoryCache } = await import("./data/seo")
+          invalidateSeoMemoryCache(pageKey ? `seo_${pageKey}` : undefined)
+        } catch {}
         revalidateTag("seo_setting")
         if (pageKey) {
           const derived = derivePathFromPageKey(pageKey)
@@ -107,6 +111,10 @@ export async function revalidateContent(options: RevalidateOptions): Promise<voi
       }
 
       case "site_setting": {
+        try {
+          const { invalidateSeoMemoryCache } = await import("./data/seo")
+          invalidateSeoMemoryCache("site_setting")
+        } catch {}
         revalidateTag("site_setting")
         revalidatePath("/", "layout")
         break

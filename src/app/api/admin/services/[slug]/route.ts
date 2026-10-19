@@ -74,13 +74,22 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
+    const raw = params.slug
+    const decoded = decodeURIComponent(raw)
+
     const { error } = await supabaseAdmin
       .from("services")
       .delete()
-      .eq("slug", params.slug)
+      .or(`slug.eq."${decoded}",slug.eq."${raw}"`)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    await revalidateContent({ type: "service", slug: params.slug })
+
+    await supabaseAdmin
+      .from("seo_settings")
+      .delete()
+      .or(`page_key.eq."service:${decoded}",page_key.eq."service:${raw}"`)
+
+    await revalidateContent({ type: "service", slug: decoded })
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 })

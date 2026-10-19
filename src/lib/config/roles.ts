@@ -22,6 +22,7 @@ export const rolesConfig: Record<string, RolePermission> = {
       "/admin/services",
       "/admin/case-studies",
       "/admin/seo",
+      "/admin/pages",
       "/admin/sitemap",
       "/admin/blog"
     ],

@@ -1,3 +1,18 @@
+/**
+ * Service Detail Page (/services/[slug])
+ * 
+ * Purpose:
+ * Renders individual dynamic landing pages for each of Mommantum's 16 services
+ * (including Performance Marketing, SEO, AI Automation, AI Video Generation,
+ * Content & Video Scripting, Video Editing, AI Video Editing, Podcast Editing, etc.).
+ * 
+ * Features & Content Architecture:
+ * - Dynamic metadata with JSON-LD schema integration for Google Rich Results.
+ * - Outlines key outcomes, hero intro with automated internal keyword linking.
+ * - Sourced service focus points displayed as clean editorial paragraphs with pink numbering.
+ * - What We Do, Why It Matters, interactive FAQ accordions, and high-conversion CTAs.
+ */
+
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -9,13 +24,16 @@ import { Epilogue, Outfit, Mansalva } from "next/font/google"
 import FaqAccordion from "./_components/FaqAccordion"
 import { supabaseAdmin } from "@lib/supabase-admin"
 import { injectInternalLinks } from "@lib/util/linker"
+import { getServiceFocusPoints, enrichServiceFocusContent } from "@lib/data/service-focus"
 
+// Revalidate page cache every 60 seconds (ISR)
 export const revalidate = 60
 
 const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
 const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
+// Default value if database has no whyItMatters entries
 const defaultWhyItMatters = [
   "Running ads without a clear system leads to wasted budget. We focus on what actually drives growth. When the right audience sees the right message and lands on a clear page, they are more likely to buy.",
   "This helps you increase sales, lower your customer acquisition cost, improve your ROAS, and build repeat customers - not just one-time buyers.",
@@ -66,6 +84,9 @@ export default async function ServiceDetailPage(props: Props) {
   }
 
   if (!service) return notFound()
+
+  // Retrieve service-specific focus points from official documentation for this service
+  const focusPoints = getServiceFocusPoints(params.slug)
 
   const linkedIntro = service.intro && keywords.length > 0
     ? injectInternalLinks(service.intro, keywords)
@@ -129,18 +150,36 @@ export default async function ServiceDetailPage(props: Props) {
             </div>
           </div>
 
-          {/* Service focus */}
-          <div className="mt-10 rounded-[22px] bg-white px-8 py-9 shadow-[0_8px_28px_rgba(0,0,0,0.05)] lg:px-12 lg:py-12">
-            <p className={`${mansalva.className} text-[18px] text-[#e61e73]`}>
+          {/* Service focus — Sourced directly and verbatim from official PDF for this specific service */}
+          <section aria-labelledby="service-focus-heading" className="mt-10 rounded-[22px] bg-white px-8 py-9 shadow-[0_8px_28px_rgba(0,0,0,0.05)] lg:px-12 lg:py-12">
+            <p id="service-focus-heading" className={`${mansalva.className} text-[18px] text-[#e61e73]`}>
               Service focus
             </p>
-            <h2 className={`${epilogue.className} mt-3 max-w-[860px] text-[26px] font-extrabold leading-[1.05] tracking-[-0.05em] text-[#0e2547] lg:text-[38px]`}>
-              We build this service as part of a larger growth system, not as a disconnected deliverable.
+            <h2 className={`${epilogue.className} mt-3 text-[26px] font-extrabold leading-[1.1] tracking-[-0.04em] text-[#0e2547] sm:text-[32px] lg:text-[36px]`}>
+              {service.title}
             </h2>
-            <p className={`${outfit.className} mt-5 max-w-[920px] text-[16px] leading-[1.95] text-slate-600`}>
-              Strong service work happens when business goals, communication, positioning, and execution move together. That is why our process stays focused on clarity, consistency, and meaningful outcomes instead of isolated activity. Every recommendation and every output should strengthen the brand as a whole.
-            </p>
-          </div>
+
+            {/* As-is content from PDF — Highlighted headings and links, NO cards */}
+            <div className="mt-8 space-y-8">
+              {focusPoints.map((point) => (
+                <div key={point.number} className="pt-2">
+                  {/* Highlighted heading with pink accented number */}
+                  <h3 className={`${epilogue.className} text-[20px] font-extrabold tracking-[-0.03em] text-[#0e2547] sm:text-[23px] lg:text-[25px]`}>
+                    <span className="text-[#e61e73] mr-2.5 font-black">{point.number}.</span>
+                    <span className="text-[#0e2547]">{point.title}</span>
+                  </h3>
+
+                  {/* As-is verbatim paragraph content with highlighted links */}
+                  <p
+                    className={`${outfit.className} mt-3 text-[15.5px] leading-[1.95] text-slate-600`}
+                    dangerouslySetInnerHTML={{
+                      __html: enrichServiceFocusContent(point.content, params.slug, keywords)
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* What we do + Why it matters */}
           <div className="mt-8 grid gap-6 lg:grid-cols-2">

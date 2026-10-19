@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin, supabaseAnon } from "@lib/supabase-admin"
+import { setCachedUserSession } from "@lib/auth-helpers"
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,13 +65,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    setCachedUserSession(authData.session.access_token, profile.role, authData.user.email || cleanEmail)
+
     const response = NextResponse.json({
       ok: true,
       message: "Login successful",
       role: profile.role,
     })
 
-    // Set secure HTTP-only cookies for session tokens
+    // Set secure cookies for session tokens and role
     response.cookies.set("sb-access-token", authData.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -83,6 +86,14 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: "/",
+      sameSite: "lax",
+    })
+
+    response.cookies.set("sb-role", profile.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: authData.session.expires_in,
       path: "/",
       sameSite: "lax",
     })

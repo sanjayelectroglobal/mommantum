@@ -10,36 +10,17 @@ export interface OrganizationTemplateOptions {
 
 /**
  * Creates Organization schema.
- * Full version on Homepage/About; compact version on other pages sharing the same @id.
- * STRICTLY NO duplicate Brand node.
+ * Full version ONLY on Homepage (@id #organization).
+ * Fully self-contained: nested logo (ImageObject), nested founder (Person),
+ * hasMerchantReturnPolicy, contactPoint, address, sameAs, knowsAbout.
+ * Non-home pages link to #organization via reference only and do not emit full node.
  */
 export function createOrganizationSchema(options: OrganizationTemplateOptions): Record<string, any> {
-  const { baseUrl, profile, full = false, includeFounder } = options
+  const { baseUrl, profile } = options
   const orgId = getEntityId(baseUrl, "#organization")
-  const logoId = getEntityId(baseUrl, "#logo")
-  const founderId = getEntityId(baseUrl, "#founder")
 
-  if (!full) {
-    // Compact Organization node for inner pages
-    return {
-      "@type": "Organization",
-      "@id": orgId,
-      name: profile.name,
-      url: profile.url || baseUrl,
-      logo: {
-        "@type": "ImageObject",
-        "@id": logoId,
-        url: profile.logo.url,
-        width: profile.logo.width,
-        height: profile.logo.height,
-      },
-      sameAs: profile.sameAs?.length ? profile.sameAs : undefined,
-    }
-  }
-
-  // Full Organization node for Homepage / About
   const fullOrg: Record<string, any> = {
-    "@type": "Organization",
+    "@type": ["Organization", "OnlineStore"],
     "@id": orgId,
     name: profile.name,
     legalName: profile.legalName || profile.name,
@@ -47,14 +28,11 @@ export function createOrganizationSchema(options: OrganizationTemplateOptions): 
     url: profile.url || baseUrl,
     logo: {
       "@type": "ImageObject",
-      "@id": logoId,
       url: profile.logo.url,
       width: profile.logo.width,
       height: profile.logo.height,
     },
-    image: {
-      "@id": logoId,
-    },
+    image: profile.logo.url,
     foundingDate: profile.foundingDate || undefined,
     numberOfEmployees: profile.numberOfEmployees?.value
       ? {
@@ -85,14 +63,32 @@ export function createOrganizationSchema(options: OrganizationTemplateOptions): 
           addressCountry: profile.address.addressCountry,
         }
       : undefined,
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "IN",
+      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+      merchantReturnDays: 7,
+      returnMethod: "https://schema.org/ReturnByMail",
+      returnFees: "https://schema.org/FreeReturn",
+    },
+    knowsAbout: [
+      "Performance Marketing",
+      "Digital Marketing",
+      "SEO",
+      "D2C Brand Growth",
+      "E-commerce Growth",
+      "Video Editing",
+    ],
     areaServed: profile.areaServed?.length ? profile.areaServed : undefined,
     sameAs: profile.sameAs?.length ? profile.sameAs : undefined,
   }
 
-  const shouldAttachFounder = includeFounder !== undefined ? includeFounder : full
-  if (profile.founder?.name && shouldAttachFounder) {
+  if (profile.founder?.name) {
     fullOrg.founder = {
-      "@id": founderId,
+      "@type": "Person",
+      name: profile.founder.name,
+      jobTitle: profile.founder.jobTitle || "Founder",
+      image: profile.founder.image || undefined,
     }
   }
 

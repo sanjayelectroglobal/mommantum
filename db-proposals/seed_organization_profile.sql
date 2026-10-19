@@ -38,10 +38,10 @@ SET
       "availableLanguage": ["English", "Hindi"]
     },
     "address": {
-      "streetAddress": "B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass",
+      "streetAddress": "B-147, Anand Vihar, Jagatpura",
       "addressLocality": "Jaipur",
       "addressRegion": "Rajasthan",
-      "postalCode": "302029",
+      "postalCode": "302017",
       "addressCountry": "IN"
     },
     "clientsCanVisitOffice": true,

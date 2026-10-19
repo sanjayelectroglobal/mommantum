@@ -43,7 +43,7 @@ export function isValidIsoDate(dateStr: unknown): boolean {
 
 /**
  * Verifies that every `@id` referenced inside an entity's properties
- * exists as an `@id` of an entity within the `@graph`.
+ * exists as an `@id` of an entity within the `@graph`, or is a valid canonical cross-page reference.
  */
 export function verifyGraphIdReferences(graph: Array<Record<string, any>>): ValidationResult {
   const issues: ValidationIssue[] = []
@@ -67,6 +67,17 @@ export function verifyGraphIdReferences(graph: Array<Record<string, any>>): Vali
   }
   graph.forEach(collectDefinedIds)
 
+  // Helper to identify canonical cross-page references to home page entities
+  function isKnownCrossPageReference(id: string): boolean {
+    return (
+      /#organization$/.test(id) ||
+      /#website$/.test(id) ||
+      /#logo$/.test(id) ||
+      id === "#organization" ||
+      id === "#website"
+    )
+  }
+
   // 2. Recursively find all { "@id": string } references
   function checkReferences(val: any, path: string) {
     if (!val || typeof val !== "object") return
@@ -79,7 +90,7 @@ export function verifyGraphIdReferences(graph: Array<Record<string, any>>): Vali
     // Check if this object is a reference (only has @id or is a reference property)
     if (typeof val["@id"] === "string" && !val["@type"]) {
       const refId = val["@id"]
-      if (!definedIds.has(refId)) {
+      if (!definedIds.has(refId) && !isKnownCrossPageReference(refId)) {
         issues.push({
           field: path,
           message: `Referenced @id "${refId}" is not defined in the schema graph`,
@@ -111,10 +122,42 @@ export function verifyGraphIdReferences(graph: Array<Record<string, any>>): Vali
 }
 
 /**
- * Verifies that forbidden entities (Brand, aggregateRating, Review) are absent.
+ * Verifies that forbidden entities (Brand as top-level, LocalBusiness, ElectronicsStore, standalone FAQPage, aggregateRating, Review) are absent.
  */
 export function verifyNoForbiddenEntities(graph: Array<Record<string, any>>): ValidationResult {
   const issues: ValidationIssue[] = []
+
+  // Check top-level nodes for forbidden standalone types
+  for (let i = 0; i < graph.length; i++) {
+    const node = graph[i]
+    if (!node || typeof node !== "object") continue
+    const rawType = node["@type"]
+    const types: string[] = Array.isArray(rawType) ? rawType : [rawType]
+
+    for (const t of types) {
+      if (t === "LocalBusiness" || t === "ElectronicsStore" || t === "ProfessionalService") {
+        issues.push({
+          field: `graph[${i}]`,
+          message: `Forbidden '${t}' entity found. Not used on Mommantum.`,
+          severity: "error",
+        })
+      }
+      if (t === "FAQPage") {
+        issues.push({
+          field: `graph[${i}]`,
+          message: "Forbidden standalone 'FAQPage' found in top-level graph. FAQPage must only be nested inside WebPage.hasPart.",
+          severity: "error",
+        })
+      }
+      if (t === "Brand") {
+        issues.push({
+          field: `graph[${i}]`,
+          message: "Forbidden top-level '@type: Brand' entity found. Brand node must not duplicate Organization.",
+          severity: "error",
+        })
+      }
+    }
+  }
 
   function checkForbidden(val: any, path: string) {
     if (!val || typeof val !== "object") return
@@ -124,10 +167,10 @@ export function verifyNoForbiddenEntities(graph: Array<Record<string, any>>): Va
       return
     }
 
-    if (val["@type"] === "Brand") {
+    if (val["@type"] === "LocalBusiness" || val["@type"] === "ElectronicsStore" || val["@type"] === "ProfessionalService") {
       issues.push({
         field: path,
-        message: "Forbidden '@type: Brand' entity found. Brand node must not duplicate Organization.",
+        message: `Forbidden '${val["@type"]}' entity found.`,
         severity: "error",
       })
     }

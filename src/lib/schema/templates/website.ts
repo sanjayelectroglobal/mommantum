@@ -4,26 +4,44 @@ import { OrganizationProfile } from "../site"
 export interface WebSiteTemplateOptions {
   baseUrl: string
   profile: OrganizationProfile
+  description?: string
+  keywords?: string[]
 }
 
 /**
  * Creates WebSite schema.
- * Strictly NO SearchAction since there is no active internal search page.
+ * Emitted ONLY on Homepage (@id #website).
+ * Includes publisher -> #organization and potentialAction SearchAction.
  */
 export function createWebSiteSchema(options: WebSiteTemplateOptions): Record<string, any> {
-  const { baseUrl, profile } = options
+  const { baseUrl, profile, description, keywords } = options
   const websiteId = getEntityId(baseUrl, "#website")
   const orgId = getEntityId(baseUrl, "#organization")
 
-  return {
+  const siteNode: Record<string, any> = {
     "@type": "WebSite",
     "@id": websiteId,
     name: profile.name,
     alternateName: profile.alternateName || profile.name,
-    url: baseUrl,
+    url: baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`,
+    description: description || "Mommantum — Performance Marketing and Growth Studio",
+    inLanguage: DEFAULT_IN_LANGUAGE,
     publisher: {
       "@id": orgId,
     },
-    inLanguage: DEFAULT_IN_LANGUAGE,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${baseUrl.replace(/\/+$/, "")}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   }
+
+  if (keywords && keywords.length > 0) {
+    siteNode.keywords = Array.from(new Set(keywords.map((k) => k.trim()).filter(Boolean))).slice(0, 6).join(", ")
+  }
+
+  return siteNode
 }

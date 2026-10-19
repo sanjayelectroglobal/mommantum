@@ -55,5 +55,16 @@ dump.rdb
 /test-results/
 /playwright-report/
 /blob-report/
-/playwright/.cache/
 /playwright/.auth
+
+# archives & scratch scripts
+*.zip
+*.tar.gz
+/scratch/
+
+# working rules & agent configuration (never push to github)
+.workrules/
+.workrules
+RULES.md
+.agents/
+.agents

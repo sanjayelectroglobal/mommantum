@@ -16,8 +16,8 @@ SET
   },
   {
     "question": "Where is Mommantum located and can I visit the office?",
-    "answer": "Our office is at B40A, Krishi Nagar, Taroo Ki Koot, near B2 Bypass, Jaipur, Rajasthan 302029. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
-    "answer_words": 40
+    "answer": "Our office is at B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan. Clients are welcome to visit. We are open Monday to Saturday, 9am to 9pm, and we also work with clients across India and internationally.",
+    "answer_words": 37
   },
   {
     "question": "Do you work with clients outside Jaipur?",

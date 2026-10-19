@@ -21,22 +21,24 @@ export default function AdminPromotionsPage() {
   }, [])
 
   return (
-    <div className="text-slate-200">
-      <div className="flex justify-between items-center">
+    <div className="text-slate-200 pb-16">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-extrabold tracking-[-0.04em] text-white">
             Promotions
           </h1>
           <p className="mt-1 text-[14px] text-slate-400">
-            Create discount collections and marketing campaigns
+            {collections.length} promotions total • Create discount collections and marketing campaigns
           </p>
         </div>
-        <Link
-          href={prefixPath("/admin/collections")}
-          className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f]"
-        >
-          Manage Collections
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href={prefixPath("/admin/collections")}
+            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white hover:bg-[#ca155f] transition-all shrink-0 h-[38px] flex items-center justify-center"
+          >
+            Manage Collections
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -61,13 +63,16 @@ export default function AdminPromotionsPage() {
                   <td className="p-4 font-bold text-white">
                     {c.title}
                   </td>
-                  <td className="p-4 text-slate-400 font-mono text-[12px]">
-                    /collections/{c.handle}
+                  <td className="p-4 font-mono text-[12px] text-slate-400">
+                    /{c.handle}
                   </td>
                   <td className="p-4 text-right">
-                    <span className="inline-block rounded-[8px] bg-green-500/10 px-2.5 py-1 text-[11px] font-bold text-green-400 border border-green-500/20">
-                      Active Campaign
-                    </span>
+                    <Link
+                      href={prefixPath(`/admin/collections`)}
+                      className="inline-block rounded-[8px] border border-[#1f2937] bg-[#1f2937]/50 px-3 py-1.5 text-[12px] font-semibold text-slate-300 hover:text-white hover:border-[#374151] transition-all"
+                    >
+                      Edit Collection
+                    </Link>
                   </td>
                 </tr>
               ))}

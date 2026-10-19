@@ -57,7 +57,6 @@ export function normalizeUrl(urlOrPath: string, baseUrl: string = DEFAULT_BASE_U
  * - {base}/#organization
  * - {base}/#website
  * - {base}/#logo
- * - {base}/#localbusiness
  * - {base}/#founder
  * - {pageUrl}#webpage
  * - {pageUrl}#breadcrumb

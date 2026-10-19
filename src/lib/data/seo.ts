@@ -66,8 +66,30 @@ function compactKeywords(setting?: SeoSetting | null, fallback?: MetadataFallbac
     .filter(Boolean)
 }
 
+const inMemorySeoCache = new Map<string, { data: any; expiry: number }>()
+
+function getMemoryCached<T>(key: string): T | null {
+  const item = inMemorySeoCache.get(key)
+  if (item && item.expiry > Date.now()) {
+    return item.data as T
+  }
+  return null
+}
+
+function setMemoryCached(key: string, data: any, ttlSec = 300) {
+  inMemorySeoCache.set(key, { data, expiry: Date.now() + ttlSec * 1000 })
+}
+
+export function invalidateSeoMemoryCache(key?: string) {
+  if (key) inMemorySeoCache.delete(key)
+  else inMemorySeoCache.clear()
+}
+
 export const getSiteSetting = unstable_cache(
   async (): Promise<SiteSetting | null> => {
+    const cached = getMemoryCached<SiteSetting>("site_setting")
+    if (cached) return cached
+
     try {
       const { data, error } = await supabase
         .from("site_setting")
@@ -79,7 +101,9 @@ export const getSiteSetting = unstable_cache(
         return null
       }
 
-      return data && data.length > 0 ? data[0] : null
+      const res = data && data.length > 0 ? data[0] : null
+      if (res) setMemoryCached("site_setting", res, 600)
+      return res
     } catch (err) {
       console.error("getSiteSetting error:", err)
       return null
@@ -92,6 +116,10 @@ export const getSiteSetting = unstable_cache(
 export const getSeoSetting = unstable_cache(
   async (pageKey: string): Promise<SeoSetting | null> => {
     if (!pageKey) return null
+    const cacheKey = `seo_${pageKey}`
+    const cached = getMemoryCached<SeoSetting>(cacheKey)
+    if (cached) return cached
+
     try {
       const { data, error } = await supabase
         .from("seo_setting")
@@ -104,7 +132,9 @@ export const getSeoSetting = unstable_cache(
         return null
       }
 
-      return data && data.length > 0 ? data[0] : null
+      const res = data && data.length > 0 ? data[0] : null
+      if (res) setMemoryCached(cacheKey, res, 600)
+      return res
     } catch (err) {
       console.error(`getSeoSetting error for key ${pageKey}:`, err)
       return null

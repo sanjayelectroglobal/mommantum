@@ -9,7 +9,6 @@ import StatsStrip from "@modules/home/components/stats-strip"
 import OurServices from "@modules/home/components/our-services"
 import CaseStudies from "@modules/home/components/case-studies"
 import BrandMarquee from "@modules/editz/components/BrandMarquee"
-import HomeFaq from "@modules/home/components/home-faq"
 
 export const revalidate = 300
 
@@ -33,7 +32,6 @@ export default async function Home() {
       <StatsStrip />
       <OurServices />
       <CaseStudies countryCode={countryCode} />
-      <HomeFaq faqs={(seoSetting as any)?.faq_section} />
     </>
   )
 }

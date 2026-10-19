@@ -30,6 +30,17 @@ const rightServices = [
   { name: "AI Video Generation", link: "/services/ai-video-generation" },
 ]
 
+// WHAT: Dedicated creative production and video editing service routes for mobile navigation
+// WHY: Ensures mobile visitors have direct access to all 6 video service landing pages
+const videoEditzServices = [
+  { name: "AI video generator", link: "/services/ai-video-generation" },
+  { name: "Content and Video Scripting", link: "/services/content-video-scripting" },
+  { name: "Video Editing", link: "/services/video-editing" },
+  { name: "AI Video Editing", link: "/services/ai-video-editing" },
+  { name: "Podcast Editing", link: "/services/podcast-editing" },
+  { name: "motion graphics", link: "/services/motion-graphics" },
+]
+
 const navItems = [
   { label: "Editz", href: "/editz" },
   { label: "Blog AI", href: "/blog-ai" },
@@ -53,6 +64,13 @@ const WebAiIcon = () => (
     <rect x="9" y="12" width="4" height="10" rx="1" fill="#e61e73" opacity="0.65"/>
     <rect x="15" y="7" width="4" height="15" rx="1" fill="#e61e73"/>
     <circle cx="21" cy="4" r="2" fill="#e61e73" opacity="0.5"/>
+  </svg>
+)
+
+const VideoEditzIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="5" width="18" height="14" rx="2" stroke="#e61e73" strokeWidth="2"/>
+    <polygon points="10,9 16,12 10,15" fill="#e61e73"/>
   </svg>
 )
 
@@ -325,6 +343,23 @@ export default function NavBar() {
                 <motion.div key={item.link}
                   initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.022 + leftServices.length * 0.022 + 0.04, duration: 0.2 }}>
+                  <LocalizedClientLink href={item.link} prefetch={false} className="mob-svc-link" onClick={closeAll}>
+                    {item.name}
+                  </LocalizedClientLink>
+                </motion.div>
+              ))}
+
+              <div className="mob-divider" />
+
+              {/* Video Editz */}
+              <div className="mob-cat-header">
+                <div className="mob-cat-icon"><VideoEditzIcon /></div>
+                <span className="mob-cat-title">Video Editz</span>
+              </div>
+              {videoEditzServices.map((item, i) => (
+                <motion.div key={item.name}
+                  initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.022 + (leftServices.length + rightServices.length) * 0.022 + 0.04, duration: 0.2 }}>
                   <LocalizedClientLink href={item.link} prefetch={false} className="mob-svc-link" onClick={closeAll}>
                     {item.name}
                   </LocalizedClientLink>

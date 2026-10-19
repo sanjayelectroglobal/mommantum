@@ -93,13 +93,29 @@ export async function DELETE(
     }
 
     const { id } = await props.params
+    const { data: existing } = await supabaseAdmin
+      .from("case_studies")
+      .select("slug")
+      .eq("id", id)
+      .maybeSingle()
+
     const { error } = await supabaseAdmin
       .from("case_studies")
       .delete()
       .eq("id", id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    await revalidateContent({ type: "case-study" })
+
+    if (existing?.slug) {
+      await supabaseAdmin
+        .from("seo_settings")
+        .delete()
+        .eq("page_key", `case-study:${existing.slug}`)
+      await revalidateContent({ type: "case-study", slug: existing.slug })
+    } else {
+      await revalidateContent({ type: "case-study" })
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
