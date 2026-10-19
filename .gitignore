@@ -68,3 +68,5 @@ dump.rdb
 RULES.md
 .agents/
 .agents
+
+.vercel
