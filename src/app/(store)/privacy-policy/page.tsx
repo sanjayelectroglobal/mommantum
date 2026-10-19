@@ -1,13 +1,9 @@
 import { Metadata } from "next"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveLegalPageData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import JsonLd from "@modules/common/components/json-ld"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
 export const revalidate = 60
 

@@ -3,12 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import { motion, useReducedMotion, AnimatePresence } from "motion/react"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 import type { Service } from "@lib/data/services"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
 const PERFORMANCE_SLUGS = [
   "performance-marketing",

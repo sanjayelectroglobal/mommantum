@@ -4,11 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { useEffect, useMemo, useState } from "react"
-import { Epilogue, Mansalva, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
+import { epilogue, mansalva, outfit } from "@lib/fonts"
 
 const words = ["faster,", "predictable,", "profitable"]
 

@@ -1,10 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 type FAQ = { question: string; answer: string }
 

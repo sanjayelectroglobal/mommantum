@@ -6,15 +6,11 @@ import JsonLd from "@modules/common/components/json-ld"
 import { getBlogPost, getBlogPosts } from "@lib/data/blog-posts"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveBlogData, buildMetadataFromResolved } from "@lib/schema/resolvers"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 import BlogFaqAccordion from "./_components/BlogFaqAccordion"
 import { supabaseAdmin } from "@lib/supabase-admin"
 import { injectInternalLinks } from "@lib/util/linker"
 import RelatedLinks from "../../../../components/RelatedLinks"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
 export const dynamicParams = true
 export const revalidate = 60

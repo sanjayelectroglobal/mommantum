@@ -6,11 +6,8 @@ import { usePathname } from "next/navigation"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
-import { Epilogue, Outfit } from "next/font/google"
+import { epilogue, outfit } from "@lib/fonts"
 import FooterFaqSection from "./FooterFaqSection"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
 
 const companyLinks = [
   { name: "Services", href: "/services" },

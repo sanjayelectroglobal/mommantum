@@ -18,10 +18,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView, useReducedMotion, type Variants } from "motion/react"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 

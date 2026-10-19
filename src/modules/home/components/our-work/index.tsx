@@ -1,10 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 
 type AccentKey = "rose" | "violet" | "sky"
 

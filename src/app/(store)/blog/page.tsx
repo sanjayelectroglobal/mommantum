@@ -5,11 +5,7 @@ import JsonLd from "@modules/common/components/json-ld"
 import { getBlogPosts } from "@lib/data/blog-posts"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveCollectionData, buildMetadataFromResolved } from "@lib/schema/resolvers"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 
 export const revalidate = 60
 

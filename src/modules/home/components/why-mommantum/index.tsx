@@ -3,10 +3,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { WandSparkles, TrendingUp, Users, Clock3, Eye } from "lucide-react"
 import { motion, type Variants } from "motion/react"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 const topItems = [
   {

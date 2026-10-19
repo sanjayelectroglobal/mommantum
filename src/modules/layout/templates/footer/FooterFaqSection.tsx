@@ -18,12 +18,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Epilogue, Outfit } from "next/font/google"
+import { epilogue, outfit } from "@lib/fonts"
 import { HOMEPAGE_FOOTER_FAQS, FAQItem } from "@lib/data/all-faqs"
-
-// Font loaders with Latin character subset matching site design standards
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
 
 export default function FooterFaqSection({ customFaqs }: { customFaqs?: FAQItem[] }) {
   // Track currently active FAQ index (null = all collapsed)

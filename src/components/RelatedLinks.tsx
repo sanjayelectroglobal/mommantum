@@ -4,10 +4,7 @@ import Image from "next/image"
 import { supabaseAdmin } from "@lib/supabase-admin"
 import { listRegions } from "@lib/data/regions"
 import { sdk } from "@lib/config"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 interface RelatedLinksProps {
   type: "blog" | "product"

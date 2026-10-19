@@ -6,11 +6,7 @@ import JsonLd from "@modules/common/components/json-ld"
 import { getCaseStudies, getCaseStudy } from "@lib/data/case-studies"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveCaseStudyData, buildMetadataFromResolved } from "@lib/schema/resolvers"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 
 type Props = {
   params: Promise<{ slug: string }>

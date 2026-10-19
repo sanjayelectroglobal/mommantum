@@ -6,10 +6,7 @@ import Link from "next/link"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { motion, useReducedMotion, type Variants } from "motion/react"
 import { TrendingUp, Globe, Megaphone, Bot, Video, Zap, PenTool, BarChart3 } from "lucide-react"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 const skills = [
   { title: "Performance Ads",   Icon: TrendingUp,  color: "#e61e73", bg: "#fff0f6", bgHover: "#fce7f3", border: "#fbb6d4", link: "/services/performance-marketing" },

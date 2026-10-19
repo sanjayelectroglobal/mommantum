@@ -6,13 +6,9 @@
  */
 "use client"
 
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 import { useEffect, useRef, useState } from "react"
 import GoogleFormContact from "@modules/contact/components/google-form-contact"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
 const stripItems = [
   "Get in touch with our team",

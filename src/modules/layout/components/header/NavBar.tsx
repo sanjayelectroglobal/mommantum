@@ -1,15 +1,12 @@
 "use client"
 
 import Image from "next/image"
-import { Epilogue, Outfit } from "next/font/google"
+import { epilogue as logoFont, outfit as navFont } from "@lib/fonts"
 import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import ServicesDropdown from "./ServicesDropdown"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-
-const logoFont = Epilogue({ subsets: ["latin"], weight: ["800"] })
-const navFont  = Outfit({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 const MOBILE_BREAKPOINT = 1024
 

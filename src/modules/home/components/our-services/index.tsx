@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion } from "motion/react"
 import Link from "next/link"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import { Epilogue, Outfit } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
+import { epilogue, outfit } from "@lib/fonts"
 
 function ScrollReveal({
   children, delay = 0, offset = 36, amount = 0.2, className = "",

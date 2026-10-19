@@ -1,10 +1,6 @@
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 import { HOME_FAQS, HomeFAQ } from "@lib/data/home-faqs"
 import FaqAccordion from "app/(store)/services/[slug]/_components/FaqAccordion"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
 
 interface HomeFaqProps {
   faqs?: HomeFAQ[]

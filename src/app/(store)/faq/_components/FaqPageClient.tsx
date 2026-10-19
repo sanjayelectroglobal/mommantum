@@ -18,12 +18,8 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { Epilogue, Outfit } from "next/font/google"
+import { epilogue, outfit } from "@lib/fonts"
 import { ALL_FAQ_CATEGORIES, FAQItem } from "@lib/data/all-faqs"
-
-// Font loaders configured for Latin subset
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500"] })
 
 export default function FaqPageClient() {
   // Selected category filter ("all" or category id)

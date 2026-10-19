@@ -20,7 +20,6 @@ import JsonLd from "@modules/common/components/json-ld"
 import { getServices, getService } from "@lib/data/services"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveServiceData, buildMetadataFromResolved } from "@lib/schema/resolvers"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
 import FaqAccordion from "./_components/FaqAccordion"
 import { supabaseAdmin } from "@lib/supabase-admin"
 import { injectInternalLinks } from "@lib/util/linker"
@@ -29,9 +28,7 @@ import { getServiceFocusPoints, enrichServiceFocusContent } from "@lib/data/serv
 // Revalidate page cache every 60 seconds (ISR)
 export const revalidate = 60
 
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 
 // Default value if database has no whyItMatters entries
 const defaultWhyItMatters = [

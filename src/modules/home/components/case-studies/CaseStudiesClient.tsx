@@ -5,11 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { motion, useReducedMotion, type Variants } from "motion/react"
 import type { CaseStudy } from "@lib/data/case-studies"
-import { Epilogue, Outfit, Mansalva } from "next/font/google"
-
-const epilogue = Epilogue({ subsets: ["latin"], weight: ["700", "800"] })
-const outfit   = Outfit({ subsets: ["latin"], weight: ["400", "500", "700"] })
-const mansalva = Mansalva({ subsets: ["latin"], weight: ["400"] })
+import { epilogue, outfit, mansalva } from "@lib/fonts"
 
 const headingVariants: Variants = {
   hidden: {},

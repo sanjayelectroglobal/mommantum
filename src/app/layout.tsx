@@ -1,18 +1,9 @@
 import { Metadata } from "next"
 import "styles/globals.css"
-import { Cormorant_Garamond, DM_Sans } from "next/font/google"
+import { dmSans as bodyFont } from "@lib/fonts"
 import Script from "next/script"
 import { buildSeoMetadata } from "@lib/data/seo"
 import KeepAlive from "../components/KeepAlive"
-
-const logoFont = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-})
-
-const bodyFont = DM_Sans({
-  subsets: ["latin"],
-})
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildSeoMetadata(["site", "default"], {
