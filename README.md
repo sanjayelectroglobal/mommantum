@@ -1,125 +1,83 @@
-<p align="center">
-  <a href="https://www.medusajs.com">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/59018053/229103275-b5e482bb-4601-46e6-8142-244f531cebdb.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    <img alt="Medusa logo" src="https://user-images.githubusercontent.com/59018053/229103726-e5b529a3-9b3f-4970-8a1f-c6af37f087bf.svg">
-    </picture>
-  </a>
-</p>
+# Mommantum
 
-<h1 align="center">
-  Medusa Next.js Starter Template
-</h1>
+Mommantum is a high-performance digital marketing agency web platform built with Next.js 15, Tailwind CSS, and Supabase.
 
-<p align="center">
-Combine Medusa's modules for your commerce backend with the newest Next.js 15 features for a performant storefront.</p>
+> **Architecture Update**: E-commerce store removed on 2026-10-21; Supabase store tables intentionally left untouched.
 
-<p align="center">
-  <a href="https://github.com/medusajs/medusa/blob/master/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat" alt="PRs welcome!" />
-  </a>
-  <a href="https://discord.gg/xpCwq3Kfn8">
-    <img src="https://img.shields.io/badge/chat-on%20discord-7289DA.svg" alt="Discord Chat" />
-  </a>
-  <a href="https://twitter.com/intent/follow?screen_name=medusajs">
-    <img src="https://img.shields.io/twitter/follow/medusajs.svg?label=Follow%20@medusajs" alt="Follow @medusajs" />
-  </a>
-</p>
+---
+
+## Overview
+
+Mommantum delivers performance marketing, SEO (AEO/GEO), creative video production, AI automation, and web development services. The platform features an automated AI SEO engine, semantic internal linking, unified Schema.org JSON-LD generation, and a secure administration dashboard.
+
+### Core Features
+
+- **Marketing Pages**: Homepage, Services, Work (Case Studies), Blog, Editz (Video Editing), Blog AI, About, Contact, FAQs, Legal.
+- **Unified Schema Engine**: Zero-runtime-leak JSON-LD builder adhering strictly to Schema.org standards with breadcrumbs and nested FAQs.
+- **AI Internal Linking**: Vector embeddings with OpenAI (`text-embedding-3-small`) to automatically recommend relevant blog and service links.
+- **Admin Dashboard**: Content management for Blog Posts, Services, Case Studies, SEO settings, and Sitemap monitoring.
+- **Security & Caching**: Role-based access control, Edge middleware protection, and production asset caching.
+
+---
+
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Components)
+- **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL, Supabase Auth, Row Level Security)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with `@medusajs/ui` design system preset
+- **Animations**: [Motion](https://motion.dev/)
+- **Icons**: Lucide React & Medusa Icons
+- **Testing**: [Vitest](https://vitest.dev/)
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-To use the [Next.js Starter Template](https://medusajs.com/nextjs-commerce/), you should have a Medusa server running locally on port 9000.
-For a quick setup, run:
+- Node.js 18+ or 20+
+- npm or yarn
 
-```shell
-npx create-medusa-app@latest
+### 1. Environment Setup
+
+Copy `.env.example` to `.env.local` and configure your keys:
+
+```bash
+cp .env.example .env.local
 ```
 
-Check out [create-medusa-app docs](https://docs.medusajs.com/learn/installation) for more details and troubleshooting.
+### 2. Install Dependencies
 
-# Overview
-
-The Medusa Next.js Starter is built with:
-
-- [Next.js](https://nextjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Typescript](https://www.typescriptlang.org/)
-- [Medusa](https://medusajs.com/)
-
-Features include:
-
-- Full ecommerce support:
-  - Product Detail Page
-  - Product Overview Page
-  - Product Collections
-  - Cart
-  - Checkout with Stripe
-  - User Accounts
-  - Order Details
-- Full Next.js 15 support:
-  - App Router
-  - Next fetching/caching
-  - Server Components
-  - Server Actions
-  - Streaming
-  - Static Pre-Rendering
-
-# Quickstart
-
-### Setting up the environment variables
-
-Navigate into your projects directory and get your environment variables ready:
-
-```shell
-cd nextjs-starter-medusa/
-mv .env.template .env.local
+```bash
+npm install
 ```
 
-### Install dependencies
+### 3. Run Development Server
 
-Use Yarn to install all dependencies.
-
-```shell
-yarn
+```bash
+npm run dev
 ```
 
-### Start developing
+Visit [http://localhost:8000](http://localhost:8000) to view the application.
 
-You are now ready to start up your project.
+---
 
-```shell
-yarn dev
+## Testing & Verification
+
+Run the test suite:
+
+```bash
+npm test
 ```
 
-### Open the code and start customizing
+Run TypeScript compilation check:
 
-Your site is now running at http://localhost:8000!
-
-# Payment integrations
-
-By default this starter supports the following payment integrations
-
-- [Stripe](https://stripe.com/)
-
-To enable the integrations you need to add the following to your `.env.local` file:
-
-```shell
-NEXT_PUBLIC_STRIPE_KEY=<your-stripe-public-key>
+```bash
+npx tsc --noEmit
 ```
 
-You'll also need to setup the integrations in your Medusa server. See the [Medusa documentation](https://docs.medusajs.com) for more information on how to configure [Stripe](https://docs.medusajs.com/resources/commerce-modules/payment/payment-provider/stripe#main).
+Build production bundle:
 
-# Resources
-
-## Learn more about Medusa
-
-- [Website](https://www.medusajs.com/)
-- [GitHub](https://github.com/medusajs)
-- [Documentation](https://docs.medusajs.com/)
-
-## Learn more about Next.js
-
-- [Website](https://nextjs.org/)
-- [GitHub](https://github.com/vercel/next.js)
-- [Documentation](https://nextjs.org/docs)
+```bash
+npm run build
+```

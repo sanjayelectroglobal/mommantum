@@ -8,7 +8,7 @@ import { createBreadcrumbSchema } from "./templates/breadcrumb"
 import { createWebPageSchema } from "./templates/webpage"
 import { createBlogPostingSchema } from "./templates/blog-posting"
 import { createFAQSchema } from "./templates/faq"
-import { createProductSchema } from "./templates/product"
+// Phase 4: Removed store createProductSchema template import.
 import { createItemListSchema } from "./templates/item-list"
 
 export type SchemaPageType = "home" | "page" | "blog_index" | "blog_post" | "product" | "category"
@@ -264,39 +264,7 @@ export async function generateSchemaGraph(
       break
     }
 
-    case "product": {
-      // EXACTLY 3 NODES: Product, WebPage (with nested FAQPage), BreadcrumbList
-      const productNode = createProductSchema({
-        pageUrl: resolved.canonicalUrl,
-        baseUrl,
-        name: resolved.title,
-        description: resolved.description,
-        image: resolved.image,
-        sku: (resolved as any).sku,
-        price: (resolved as any).price || (resolved.offers as any)?.price,
-        currency: (resolved.offers as any)?.priceCurrency || "INR",
-        offers: resolved.offers,
-      })
-      rawNodes.push(productNode)
-
-      const webPageNode = createWebPageSchema({
-        type: "WebPage",
-        pageUrl: resolved.canonicalUrl,
-        baseUrl,
-        name: resolved.title,
-        description: resolved.description,
-        image: resolved.image,
-        keywords: resolved.keywords,
-        mainEntityId: getEntityId(resolved.canonicalUrl, "#product"),
-        hasPart: faqNode,
-        includeWebSite: true,
-        breadcrumb: breadcrumbNode,
-      })
-      rawNodes.push(webPageNode)
-
-      break
-    }
-
+    // Phase 4: Removed case "product" (store product schemas removed).
     case "category": {
       // EXACTLY 3 NODES: CollectionPage (with nested FAQPage), ItemList, BreadcrumbList
       const collectionPageNode = createWebPageSchema({

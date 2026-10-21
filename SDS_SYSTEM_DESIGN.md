@@ -1,9 +1,10 @@
-# Software Design Specification (SDS): Mommantum Studio & Storefront
+# Software Design Specification (SDS): Mommantum Studio & Agency Platform
 
-> **Document Version:** 2.1.0  
+> **Document Version:** 2.2.0  
 > **Classification:** Technical Architecture & System Design Specification  
 > **Status:** Active / Production Baseline  
 > **Author:** Architecture Engineering Team  
+> **Architecture Note:** E-commerce store removed on 2026-10-21; Supabase store tables intentionally left untouched.
 
 ---
 
@@ -12,7 +13,7 @@
 The **Mommantum System** is designed to satisfy three high-performance engineering requirements:
 1. **Ultra-Low Latency Public Experience:** Sub-200ms TTFB for all marketing and portfolio pages through edge bypass, static generation (SSG/ISR), and memory-cached database queries.
 2. **Unified Semantic Graph (SEO & GEO):** 100% Schema.org compliant, single-script connected graph structure for search engines (Google Rich Results) and Generative AI engines (AEO/GEO).
-3. **Serverless Full-Stack Resilience:** Fully decoupled front-end and back-end pipelines leveraging Next.js 15 App Router on Vercel and PostgreSQL with Row Level Security on Supabase.
+3. **Serverless Full-Stack Resilience:** Decoupled front-end and back-end pipelines leveraging Next.js 15 App Router on Vercel and PostgreSQL with Row Level Security on Supabase.
 
 ---
 
@@ -34,7 +35,6 @@ graph TB
     subgraph AppServer["Application Tier (Next.js 15 Serverless)"]
         SSR[Server Components & Pages]
         SchemaEngine[Unified Schema & Resolver Engine]
-        StoreProxy[Simulated Medusa Store Proxy /api/store]
         AdminAPI[Protected Admin REST APIs /api/admin]
         CronEngine[Background Cron & Auto-Fill /api/cron]
     end
@@ -58,11 +58,9 @@ graph TB
     EdgeRouter --> Middleware
     Middleware --> SSR
     Middleware --> AdminAPI
-    Middleware --> StoreProxy
     SSR --> SchemaEngine
     SSR --> Postgres
     AdminAPI --> Postgres
-    StoreProxy --> Postgres
     AdminAPI --> AuthService
     CronEngine --> OpenAI
     CronEngine --> AnswerPublic
@@ -102,7 +100,7 @@ To eliminate schema duplication and drift between visible HTML and metadata, the
 
 #### Core Components in `src/lib/schema/`:
 * `resolvers/`: Pure functional transformers that accept domain models (e.g. `Service`, `BlogPost`) and database `SeoSetting` records, producing a normalized `ResolvedData` object.
-* `templates/`: Schema.org builder functions (`createWebSiteSchema`, `createOrganizationSchema`, `createWebPageSchema`, `createBreadcrumbSchema`, `createFAQSchema`).
+* `templates/`: Schema.org builder functions (`createWebSiteSchema`, `createOrganizationSchema`, `createWebPageSchema`, `createBreadcrumbSchema`, `createFAQSchema`, `createItemListSchema`).
 * `generate-graph.ts`: Assembles disparate entity nodes into an integrated `@graph` array connected via deterministic `@id` URIs.
 * `serialize.ts`: Ensures safe JSON serialization by escaping script termination characters (`<`, `>`, `&`).
 * `src/modules/common/components/json-ld/index.tsx`: Server Component rendering the single `<script type="application/ld+json">`.
@@ -119,9 +117,6 @@ erDiagram
     SERVICES ||--o{ SERVICE_FAQS : renders
     POST ||--o{ POST_FAQS : renders
     PROFILES ||--o{ USER_AUDIT : tracks
-    CART ||--|{ CART_LINE_ITEM : contains
-    CART ||--o| CART_ADDRESS : ships_to
-    PRODUCT ||--|{ PRODUCT_VARIANT : has
 
     SITE_SETTING {
         bigint id PK

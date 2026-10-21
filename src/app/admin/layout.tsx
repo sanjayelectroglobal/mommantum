@@ -2,14 +2,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+// Phase 3: Removed store-only icons (ShoppingCart, Tag, Box, Ticket, Coins).
 import { 
   Search as SearchIcon, 
-  ShoppingCart, 
-  Tag, 
-  Box, 
-  Users, 
-  Ticket, 
-  Coins, 
   Globe, 
   FileText, 
   ChevronDown, 
@@ -24,7 +19,8 @@ import {
   BookOpen,
   Map,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Box
 } from "lucide-react"
 import { rolesConfig, isPathAllowed } from "@lib/config/roles"
 
@@ -138,9 +134,8 @@ export default function AdminLayout({
     return isPathAllowed(href, allowedFrontendPaths)
   }
 
+  // Phase 3: Removed Collections and Categories from metaObjectsItems — those admin pages are deleted.
   const metaObjectsItems = [
-    { label: "Collections", href: "/admin/collections" },
-    { label: "Categories", href: "/admin/categories" },
     { label: "User Management", href: "/admin/users" },
   ].filter((item) => showLink(item.href))
 
@@ -312,16 +307,7 @@ export default function AdminLayout({
             />
           )}
 
-          {/* Users */}
-          {showLink("/admin/customers") && (
-            <SidebarLink
-              href={prefixPath("/admin/customers")}
-              label="Users"
-              icon={<Users size={17} />}
-              active={isActive("/admin/customers")}
-              isCollapsed={isCollapsed}
-            />
-          )}
+          {/* Phase 3: Removed /admin/customers (store customer management page deleted) */}
 
           {/* Extensions & Meta Objects Section */}
           {(showLink("/admin/blog") || metaObjectsItems.length > 0) && (

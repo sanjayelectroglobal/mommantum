@@ -6,8 +6,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}))
     const { type, id, force, limit } = body
 
+    // Phase 4: Updated allowed types to remove store product/category; only service, blog, page remain.
     const result = await AiSeoService.runAutoFillJob({
-      type: type as "product" | "blog" | "category" | undefined,
+      type: type as "service" | "blog" | "page" | undefined,
       id: id ? String(id) : undefined,
       force: Boolean(force),
       limit: limit ? Number(limit) : 100,

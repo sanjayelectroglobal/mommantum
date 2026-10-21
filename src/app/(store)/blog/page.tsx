@@ -37,9 +37,6 @@ export default async function BlogPage() {
       <main className="flex min-h-[60vh] items-center justify-center bg-[#f3f4f6]">
         <div className="text-center">
           <p className="text-slate-400 text-lg">No blog posts yet.</p>
-          <p className="text-slate-300 text-sm mt-2">
-            Backend: {process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "NOT SET"}
-          </p>
         </div>
       </main>
     )

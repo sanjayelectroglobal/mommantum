@@ -24,7 +24,7 @@ const SITEMAP_LINKS: SitemapLink[] = [
   {
     label: "Static Pages",
     url: `${BASE_URL}/sitemap/pages.xml`,
-    description: "Homepage, Services, Work, Blog, About, Contact, Store, Legal pages",
+    description: "Homepage, Services, Work, Blog, About, Contact, Legal pages",
     priority: "0.5 – 1.0",
     category: "Sub-Sitemaps",
   },
@@ -49,27 +49,7 @@ const SITEMAP_LINKS: SitemapLink[] = [
     priority: "0.8",
     category: "Sub-Sitemaps",
   },
-  {
-    label: "Products",
-    url: `${BASE_URL}/sitemap/products.xml`,
-    description: "All store product pages",
-    priority: "0.9",
-    category: "Sub-Sitemaps",
-  },
-  {
-    label: "Collections",
-    url: `${BASE_URL}/sitemap/collections.xml`,
-    description: "All product collection pages",
-    priority: "0.8",
-    category: "Sub-Sitemaps",
-  },
-  {
-    label: "Categories",
-    url: `${BASE_URL}/sitemap/categories.xml`,
-    description: "All product category pages",
-    priority: "0.8",
-    category: "Sub-Sitemaps",
-  },
+  // Phase 3: Removed store sub-sitemaps (Products, Collections, Categories).
 ]
 
 const ROBOTS_LINK = `${BASE_URL}/robots.txt`

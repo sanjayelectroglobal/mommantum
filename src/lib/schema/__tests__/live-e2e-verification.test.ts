@@ -90,40 +90,6 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
           faqs: [],
         }),
     },
-    {
-      pageType: "product",
-      url: "/products/sample-product",
-      expectedTypes: ["Product", "WebPage"],
-      expectedCount: 2,
-      resolver: () => ({
-        contentType: "product" as const,
-        title: "Sample Product | Mommantum",
-        description: "Official sample product description.",
-        canonicalUrl: "https://www.mommantum.com/products/sample-product",
-        image: "/images/sample.jpg",
-        keywords: ["sample", "ecommerce"],
-        breadcrumbs: [
-          { name: "Home", url: "https://www.mommantum.com/" },
-          { name: "Store", url: "https://www.mommantum.com/store" },
-          { name: "Sample Product", url: "https://www.mommantum.com/products/sample-product" },
-        ],
-        offers: {
-          price: 1499,
-          priceCurrency: "INR",
-        },
-      }),
-    },
-    {
-      pageType: "category",
-      url: "/store",
-      expectedTypes: ["CollectionPage", "ItemList"],
-      expectedCount: 2,
-      resolver: () =>
-        resolveCollectionData({
-          section: "store",
-          items: [{ name: "Apparel", handle: "apparel" }],
-        }),
-    },
   ]
 
   for (const page of samplePages) {
@@ -242,12 +208,7 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
         expectedCount: 1,
         expectedTypes: ["WebPage"],
       },
-      {
-        name: "Store Listing (category)",
-        props: { type: "collection", section: "store", items: [{ name: "Apparel", handle: "apparel" }] },
-        expectedCount: 2,
-        expectedTypes: ["CollectionPage", "ItemList"],
-      },
+      // Phase 4: Removed store listing component test case.
       {
         name: "Legal Page (privacy-policy)",
         props: { type: "page", slug: "privacy-policy", title: "Privacy Policy", description: "Privacy info" },

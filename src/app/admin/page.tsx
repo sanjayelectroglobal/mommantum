@@ -1,3 +1,5 @@
+// Phase 3: Removed store dashboard stats (products, collections, categories, orders).
+// Dashboard now shows only Mommantum marketing stats: blog posts and services.
 "use client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
@@ -8,10 +10,6 @@ export default function AdminDashboard() {
   const [counts, setCounts] = useState({
     blog: 0,
     services: 0,
-    products: 0,
-    collections: 0,
-    categories: 0,
-    orders: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -22,10 +20,6 @@ export default function AdminDashboard() {
         setCounts({
           blog: data.blog || 0,
           services: data.services || 0,
-          products: data.products || 0,
-          collections: data.collections || 0,
-          categories: data.categories || 0,
-          orders: data.orders || 0,
         })
         setLoading(false)
       })
@@ -36,10 +30,6 @@ export default function AdminDashboard() {
   }, [])
 
   const stats = [
-    { label: "Orders", count: counts.orders, href: "/admin/orders", color: "#22c55e", icon: "🛒" },
-    { label: "Products", count: counts.products, href: "/admin/products", color: "#3b82f6", icon: "📦" },
-    { label: "Collections", count: counts.collections, href: "/admin/collections", color: "#a855f7", icon: "🏷️" },
-    { label: "Categories", count: counts.categories, href: "/admin/categories", color: "#f97316", icon: "📂" },
     { label: "Services", count: counts.services, href: "/admin/services", color: "#10b981", icon: "⚡" },
     { label: "Blog Posts", count: counts.blog, href: "/admin/blog", color: "#e61e73", icon: "✍" },
   ]
@@ -50,7 +40,7 @@ export default function AdminDashboard() {
         Dashboard
       </h1>
       <p className="mt-1 text-[14px] text-slate-400">
-        Welcome back to Medusa Admin. Here is your store overview.
+        Welcome back to Mommantum Admin. Here is your content overview.
       </p>
 
       {/* Stats Grid */}
@@ -84,14 +74,8 @@ export default function AdminDashboard() {
         </h2>
         <div className="flex flex-wrap gap-3">
           <Link
-            href={prefixPath("/admin/products/new")}
-            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white transition-all hover:bg-[#ca155f]"
-          >
-            + New Product
-          </Link>
-          <Link
             href={prefixPath("/admin/blog/new")}
-            className="rounded-[10px] bg-[#1f2937] px-5 py-2.5 text-[13px] font-bold text-white transition-all border border-[#374151] hover:bg-[#374151]"
+            className="rounded-[10px] bg-[#e61e73] px-5 py-2.5 text-[13px] font-bold text-white transition-all hover:bg-[#ca155f]"
           >
             + New Blog Post
           </Link>

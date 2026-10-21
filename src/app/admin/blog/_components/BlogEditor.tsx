@@ -42,7 +42,13 @@ export default function BlogEditor({
     initialData?.image_urls?.[2] || "",
   ])
 
-  const [categories, setCategories] = useState<any[]>([])
+  // Phase 3: Removed store category fetch from deleted /api/admin/categories.
+  const blogCategories = [
+    "D2C Marketing",
+    "Creative Strategy",
+    "Paid Ads",
+    "SEO & AEO",
+  ]
 
   // Image Library states
   const [isLibraryOpen, setIsLibraryOpen] = useState(false)
@@ -60,16 +66,6 @@ export default function BlogEditor({
 
   const currentSlug = form.slug || initialData?.slug || ""
   const pageKey = currentSlug ? `blog:${currentSlug}` : "blog:new"
-
-  // Fetch product categories on mount
-  useEffect(() => {
-    fetch("/api/admin/categories")
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(Array.isArray(data) ? data : [])
-      })
-      .catch(() => {})
-  }, [])
 
   // Fetch Image Library when opened
   useEffect(() => {
@@ -404,15 +400,11 @@ export default function BlogEditor({
                     className={inputClass}
                   >
                     <option value="">Select Category...</option>
-                    {categories.map((c: any) => (
-                      <option key={c.id || c.name} value={c.name || c.id}>
-                        {c.name}
+                    {blogCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
                       </option>
                     ))}
-                    <option value="D2C Marketing">D2C Marketing</option>
-                    <option value="Creative Strategy">Creative Strategy</option>
-                    <option value="Paid Ads">Paid Ads</option>
-                    <option value="SEO & AEO">SEO & AEO</option>
                   </select>
                 </div>
                 <div>

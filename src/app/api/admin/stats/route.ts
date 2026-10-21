@@ -14,21 +14,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(cachedStats.data)
     }
 
-    // Run count queries in parallel using head: true
+    // Phase 3: Removed counts for deleted store tables (product, product_collection, product_category, order).
+    // Run count queries in parallel using head: true for marketing entities only
     const [
       blogRes,
       servicesRes,
-      productsRes,
-      collectionsRes,
-      categoriesRes,
-      ordersRes,
     ] = await Promise.allSettled([
       supabaseAdmin.from("post").select("id", { count: "exact", head: true }).is("deleted_at", null),
       supabaseAdmin.from("services").select("slug", { count: "exact", head: true }),
-      supabaseAdmin.from("product").select("id", { count: "exact", head: true }).is("deleted_at", null),
-      supabaseAdmin.from("product_collection").select("id", { count: "exact", head: true }).is("deleted_at", null),
-      supabaseAdmin.from("product_category").select("id", { count: "exact", head: true }).is("deleted_at", null),
-      supabaseAdmin.from("order").select("id", { count: "exact", head: true }).is("deleted_at", null),
     ])
 
     const getCount = (r: PromiseSettledResult<any>) =>
@@ -37,10 +30,6 @@ export async function GET(req: NextRequest) {
     const statsData = {
       blog: getCount(blogRes),
       services: getCount(servicesRes),
-      products: getCount(productsRes),
-      collections: getCount(collectionsRes),
-      categories: getCount(categoriesRes),
-      orders: getCount(ordersRes),
     }
 
     cachedStats = {

@@ -29,7 +29,8 @@ export type JsonLdProps =
   | { type: "case-study"; data: CaseStudy; seoSetting?: SeoSetting | null }
   | {
       type: "collection"
-      section: "services" | "work" | "blog" | "store"
+      // Phase 4: Removed store collection; only marketing collections remain.
+      section: "services" | "work" | "blog"
       items: CollectionItemInput[]
       seoSetting?: SeoSetting | null
     }

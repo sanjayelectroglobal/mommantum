@@ -1,11 +1,11 @@
+// Phase 4: Removed store product embeddings and Medusa SDK dependencies (listProducts, listRegions).
+// linking-service now indexes marketing entities (blogs and services).
 import { createHash } from "crypto"
 import { supabaseAdmin } from "@lib/supabase-admin"
-import { listProducts } from "@lib/data/products"
-import { listRegions } from "@lib/data/regions"
 
 export interface LinkEmbedding {
   id: string
-  resource_type: "product" | "blog"
+  resource_type: "blog" | "service"
   resource_id: string
   title: string
   url: string
@@ -89,7 +89,7 @@ export class LinkingService {
   }
 
   /**
-   * Syncs blog posts and products into the link_embedding table
+   * Syncs blog posts and services into the link_embedding table
    */
   static async syncEmbeddings(): Promise<{ synced: number; deleted: number }> {
     console.log("Starting Link Embedding Synchronization...")
@@ -104,16 +104,12 @@ export class LinkingService {
       throw new Error(`Failed to fetch blogs from Supabase: ${postErr.message}`)
     }
 
-    let products: any[] = []
-    try {
-      const regions = await listRegions()
-      const regionId = regions?.[0]?.id
-      if (regionId) {
-        const prodRes = await listProducts({ regionId, queryParams: { limit: 100 } })
-        products = prodRes.response.products || []
-      }
-    } catch (err: any) {
-      console.warn("Could not fetch products from Medusa SDK:", err.message)
+    const { data: services, error: servErr } = await supabaseAdmin
+      .from("services")
+      .select("*")
+
+    if (servErr) {
+      console.warn("Could not fetch services for internal linking:", servErr.message)
     }
 
     const { data: existing, error: existErr } = await supabaseAdmin
@@ -134,7 +130,8 @@ export class LinkingService {
     const activeIds = new Set<string>()
     let syncedCount = 0
 
-    for (const post of posts) {
+    // 1. Sync blog posts
+    for (const post of posts || []) {
       const id = `blog:${post.slug}`
       activeIds.add(id)
 
@@ -175,14 +172,16 @@ export class LinkingService {
       }
     }
 
-    for (const product of products) {
-      const id = `product:${product.id}`
+    // 2. Sync services
+    for (const s of services || []) {
+      const id = `service:${s.slug}`
       activeIds.add(id)
 
-      const title = product.title || ""
-      const description = product.description || ""
-      const subtitle = product.subtitle || ""
-      const bodyText = `${title}\n\n${subtitle}\n\n${description}`
+      const title = s.title || ""
+      const intro = s.intro || ""
+      const description = s.description || ""
+      const points = Array.isArray(s.points) ? s.points.join(" ") : ""
+      const bodyText = `${title}\n\n${intro}\n\n${description}\n\n${points}`
       const hash = this.getContentHash(bodyText)
 
       const prevHash = existingMap.get(id)
@@ -190,28 +189,27 @@ export class LinkingService {
         continue
       }
 
-      console.log(`Generating embedding for product: ${title}`)
+      console.log(`Generating embedding for service: ${title}`)
       const embedding = await this.generateEmbedding(bodyText)
-      const keywords = product.tags?.map((t: any) => t.value).join(", ") || ""
 
       const { error: upsertErr } = await supabaseAdmin
         .from("link_embedding")
         .upsert({
           id,
-          resource_type: "product",
-          resource_id: product.id,
+          resource_type: "service",
+          resource_id: s.id || s.slug,
           title,
-          url: `/products/${product.handle}`,
+          url: `/services/${s.slug}`,
           content_hash: hash,
           status: "published",
-          group_key: product.collection_id || "product",
-          keywords,
+          group_key: "services",
+          keywords: s.short_label || s.title || "",
           embedding,
           updated_at: new Date().toISOString(),
         })
 
       if (upsertErr) {
-        console.error(`Failed to upsert embedding for product ${title}:`, upsertErr.message)
+        console.error(`Failed to upsert embedding for service ${title}:`, upsertErr.message)
       } else {
         syncedCount++
       }
@@ -288,7 +286,6 @@ export class LinkingService {
         const targetDate = new Date(target.created_at || Date.now())
         const isFresh = Date.now() - targetDate.getTime() < 30 * 24 * 60 * 60 * 1000
         if (isFresh) boost += 0.05
-        if (target.resource_type === "product") boost += 0.05
 
         const totalScore = Math.min(1.0, simScore + groupBonus + kwBonus + boost)
         const anchorText = target.title
@@ -318,7 +315,7 @@ export class LinkingService {
       const sourceId = cand.source_id
       const targetId = cand.target_id
 
-      const maxOutbound = cand.source_type === "blog" ? 6 : 8
+      const maxOutbound = 6
       const currentOutbound = outboundCounts.get(sourceId) || 0
       if (currentOutbound >= maxOutbound) continue
 

@@ -1,3 +1,4 @@
+// Phase 4/5: Removed store sub-sitemaps (products, collections, categories) from sitemap index.
 import { getSiteSetting } from "@lib/data/seo"
 
 export const dynamic = "force-dynamic"
@@ -35,18 +36,6 @@ export async function GET() {
   </sitemap>
   <sitemap>
     <loc>${baseUrl}/sitemap/work.xml</loc>
-    <lastmod>${lastmod}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${baseUrl}/sitemap/products.xml</loc>
-    <lastmod>${lastmod}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${baseUrl}/sitemap/collections.xml</loc>
-    <lastmod>${lastmod}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${baseUrl}/sitemap/categories.xml</loc>
     <lastmod>${lastmod}</lastmod>
   </sitemap>
 </sitemapindex>`
