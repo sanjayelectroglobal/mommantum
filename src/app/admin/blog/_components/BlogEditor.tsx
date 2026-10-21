@@ -42,34 +42,13 @@ export default function BlogEditor({
     initialData?.image_urls?.[2] || "",
   ])
 
-  const [categories, setCategories] = useState<any[]>([])
-
-  // Image Library states
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
-  const [activeImageTarget, setActiveImageTarget] = useState<
-    "featured_image" | "image_url_1" | "image_url_2" | "image_url_3" | "editor" | null
-  >(null)
-  const [libraryImages, setLibraryImages] = useState<LibraryImage[]>([])
-  const [loadingLibrary, setLoadingLibrary] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [librarySearch, setLibrarySearch] = useState("")
-  const [copySuccessUrl, setCopySuccessUrl] = useState<string | null>(null)
-
-  // Editor tab inside Article Content
-  const [editorTab, setEditorTab] = useState<"html" | "preview">("html")
-
-  const currentSlug = form.slug || initialData?.slug || ""
-  const pageKey = currentSlug ? `blog:${currentSlug}` : "blog:new"
-
-  // Fetch product categories on mount
-  useEffect(() => {
-    fetch("/api/admin/categories")
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(Array.isArray(data) ? data : [])
-      })
-      .catch(() => {})
-  }, [])
+  // Phase 3: Removed store category fetch from deleted /api/admin/categories.
+  const blogCategories = [
+    "D2C Marketing",
+    "Creative Strategy",
+    "Paid Ads",
+    "SEO & AEO",
+  ]
 
   // Fetch Image Library when opened
   useEffect(() => {
@@ -404,15 +383,11 @@ export default function BlogEditor({
                     className={inputClass}
                   >
                     <option value="">Select Category...</option>
-                    {categories.map((c: any) => (
-                      <option key={c.id || c.name} value={c.name || c.id}>
-                        {c.name}
+                    {blogCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
                       </option>
                     ))}
-                    <option value="D2C Marketing">D2C Marketing</option>
-                    <option value="Creative Strategy">Creative Strategy</option>
-                    <option value="Paid Ads">Paid Ads</option>
-                    <option value="SEO & AEO">SEO & AEO</option>
                   </select>
                 </div>
                 <div>

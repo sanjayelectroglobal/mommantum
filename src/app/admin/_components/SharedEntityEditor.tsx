@@ -61,12 +61,7 @@ export function getActiveSchemaBadges(pageKey: string): string[] {
   if (k.startsWith("blog:")) {
     return ["BlogPosting", "WebPage", "BreadcrumbList"]
   }
-  if (k === "store" || k.startsWith("collection:") || k.startsWith("category:")) {
-    return ["CollectionPage", "ItemList", "BreadcrumbList"]
-  }
-  if (k.startsWith("product:")) {
-    return ["Product", "WebPage", "BreadcrumbList"]
-  }
+  // Phase 3: Removed store, product, and category schema type hints.
   if (k.startsWith("service:") || k.startsWith("services:")) {
     return ["Service", "WebPage (nested FAQ)", "BreadcrumbList"]
   }

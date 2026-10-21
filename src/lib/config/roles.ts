@@ -8,17 +8,10 @@ export const rolesConfig: Record<string, RolePermission> = {
     allowedFrontendPaths: ["*"],
     allowedApiPaths: ["*"],
   },
+  // Phase 3: Removed deleted store admin routes from manager, content_manager, and viewer roles.
   manager: {
     allowedFrontendPaths: [
       "/admin",
-      "/admin/orders",
-      "/admin/products",
-      "/admin/inventory",
-      "/admin/customers",
-      "/admin/promotions",
-      "/admin/price-lists",
-      "/admin/collections",
-      "/admin/categories",
       "/admin/services",
       "/admin/case-studies",
       "/admin/seo",
@@ -28,14 +21,6 @@ export const rolesConfig: Record<string, RolePermission> = {
     ],
     allowedApiPaths: [
       "/api/admin/stats",
-      "/api/admin/orders",
-      "/api/admin/products",
-      "/api/admin/inventory",
-      "/api/admin/customers",
-      "/api/admin/promotions",
-      "/api/admin/price-lists",
-      "/api/admin/collections",
-      "/api/admin/categories",
       "/api/admin/services",
       "/api/admin/case-studies",
       "/api/admin/seo",
@@ -58,8 +43,6 @@ export const rolesConfig: Record<string, RolePermission> = {
   content_manager: {
     allowedFrontendPaths: [
       "/admin",
-      "/admin/collections",
-      "/admin/categories",
       "/admin/services",
       "/admin/case-studies",
       "/admin/seo",
@@ -68,8 +51,6 @@ export const rolesConfig: Record<string, RolePermission> = {
     ],
     allowedApiPaths: [
       "/api/admin/stats",
-      "/api/admin/collections",
-      "/api/admin/categories",
       "/api/admin/services",
       "/api/admin/case-studies",
       "/api/admin/seo",
@@ -92,14 +73,6 @@ export const rolesConfig: Record<string, RolePermission> = {
   viewer: {
     allowedFrontendPaths: [
       "/admin",
-      "/admin/orders",
-      "/admin/products",
-      "/admin/inventory",
-      "/admin/customers",
-      "/admin/promotions",
-      "/admin/price-lists",
-      "/admin/collections",
-      "/admin/categories",
       "/admin/services",
       "/admin/case-studies",
       "/admin/seo",
@@ -108,14 +81,6 @@ export const rolesConfig: Record<string, RolePermission> = {
     ],
     allowedApiPaths: [
       "/api/admin/stats",
-      "/api/admin/orders",
-      "/api/admin/products",
-      "/api/admin/inventory",
-      "/api/admin/customers",
-      "/api/admin/promotions",
-      "/api/admin/price-lists",
-      "/api/admin/collections",
-      "/api/admin/categories",
       "/api/admin/services",
       "/api/admin/case-studies",
       "/api/admin/seo",
