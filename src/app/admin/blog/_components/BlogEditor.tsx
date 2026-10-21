@@ -50,6 +50,23 @@ export default function BlogEditor({
     "SEO & AEO",
   ]
 
+  // Image Library states
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
+  const [activeImageTarget, setActiveImageTarget] = useState<
+    "featured_image" | "image_url_1" | "image_url_2" | "image_url_3" | "editor" | null
+  >(null)
+  const [libraryImages, setLibraryImages] = useState<LibraryImage[]>([])
+  const [loadingLibrary, setLoadingLibrary] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [librarySearch, setLibrarySearch] = useState("")
+  const [copySuccessUrl, setCopySuccessUrl] = useState<string | null>(null)
+
+  // Editor tab inside Article Content
+  const [editorTab, setEditorTab] = useState<"html" | "preview">("html")
+
+  const currentSlug = form.slug || initialData?.slug || ""
+  const pageKey = currentSlug ? `blog:${currentSlug}` : "blog:new"
+
   // Fetch Image Library when opened
   useEffect(() => {
     if (isLibraryOpen) {

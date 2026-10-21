@@ -1,10 +1,10 @@
+// Phase 4: Removed store product/category auto-fill and Medusa SDK dependencies (listProducts, listRegions).
+// Supports SEO AI metadata generation and auto-fill for service, blog, and page types.
 import { supabaseAdmin } from "@lib/supabase-admin"
-import { listProducts } from "@lib/data/products"
-import { listRegions } from "@lib/data/regions"
 import { revalidateContent } from "@lib/revalidate"
 
 export interface SeoGenerationInput {
-  type: "product" | "blog" | "category"
+  type: "service" | "blog" | "page"
   id: string
   title: string
   slug: string
@@ -58,31 +58,40 @@ export function parseHtmlContent(htmlStr: string) {
  * Fetches real-world user queries for a keyword via Answer The Public (RapidAPI).
  * Falls back to OpenAI query generation if RapidAPI key is missing or fails.
  */
-export async function fetchAnswerThePublicQueries(keyword: string): Promise<string[]> {
-  const rapidApiKey = process.env.RAPIDAPI_KEY || process.env.ANSWER_THE_PUBLIC_KEY
-  if (rapidApiKey) {
-    try {
-      const res = await fetch(
-        `https://answer-the-public.p.rapidapi.com/questions?keyword=${encodeURIComponent(
-          keyword
-        )}&country=us&lang=en`,
-        {
-          headers: {
-            "X-RapidAPI-Key": rapidApiKey,
-            "X-RapidAPI-Host": "answer-the-public.p.rapidapi.com",
-          },
-        }
-      )
-      if (res.ok) {
-        const json = await res.json()
-        const questions: string[] = json?.data?.questions || json?.questions || []
-        if (Array.isArray(questions) && questions.length > 0) {
-          return questions.slice(0, 5)
+async function fetchAnswerThePublicQueries(keyword: string): Promise<string[]> {
+  const apiKey = process.env.RAPIDAPI_KEY
+  if (!apiKey || !keyword) {
+    return []
+  }
+
+  try {
+    const res = await fetch(
+      `https://answer-the-public.p.rapidapi.com/search?keyword=${encodeURIComponent(
+        keyword
+      )}&country=in&lang=en`,
+      {
+        headers: {
+          "X-RapidAPI-Key": apiKey,
+          "X-RapidAPI-Host": "answer-the-public.p.rapidapi.com",
+        },
+      }
+    )
+
+    if (res.ok) {
+      const data = await res.json()
+      const questions: string[] = []
+      if (Array.isArray(data?.questions)) {
+        for (const item of data.questions) {
+          if (typeof item === "string") questions.push(item)
+          else if (item?.text) questions.push(item.text)
         }
       }
-    } catch (err: any) {
-      console.warn("Answer The Public RapidAPI request failed, falling back to AI:", err.message)
+      if (questions.length > 0) {
+        return questions.slice(0, 5)
+      }
     }
+  } catch (err: any) {
+    console.warn("Answer The Public RapidAPI request failed, falling back to AI:", err.message)
   }
 
   return []
@@ -102,7 +111,7 @@ export class AiSeoService {
     const atpQuestions = await fetchAnswerThePublicQueries(input.existingPrimaryKeyword || input.title)
 
     const prompt = `
-You are an expert E-commerce & Content SEO Strategist for the brand "Mommantum".
+You are an expert Content & Digital Marketing SEO Strategist for the brand "Mommantum".
 Generate optimized SEO metadata and search-intent FAQs for a ${input.type}.
 
 Input Details:
@@ -114,7 +123,7 @@ Input Details:
 
 Strict Rules for JSON Output:
 1. "meta_title": Under 60 characters, MUST include primary keyword, MUST end with " | Mommantum".
-2. "meta_description": 150-160 characters, catchy hook, includes primary keyword and hooks (e.g. Free Shipping / COD / High Growth depending on context).
+2. "meta_description": 150-160 characters, catchy hook, includes primary keyword and marketing value proposition.
 3. "primary_keyword": 1 main high-intent search term string.
 4. "secondary_keywords": Array of exactly 4 secondary keyword strings.
 5. "tags": Array of 5 to 8 relevant tag strings.
@@ -165,38 +174,26 @@ Output ONLY valid JSON without markdown fences matching schema:
     })
 
     if (!res.ok) {
-      const errText = await res.text()
-      throw new Error(`OpenAI API error (${res.status}): ${errText}`)
+      const err = await res.text()
+      throw new Error(`OpenAI Chat Completion failed (${res.status}): ${err}`)
     }
 
     const data = await res.json()
-    const rawContent = data?.choices?.[0]?.message?.content || "{}"
-    const parsed = JSON.parse(rawContent)
-
-    return {
-      meta_title: parsed.meta_title || `${input.title} | Mommantum`,
-      meta_description: parsed.meta_description || "",
-      primary_keyword: parsed.primary_keyword || input.title,
-      secondary_keywords: parsed.secondary_keywords || [],
-      tags: parsed.tags || [],
-      og_title: parsed.og_title || parsed.meta_title,
-      og_description: parsed.og_description || parsed.meta_description,
-      og_image: input.image || null,
-      twitter_card: "summary_large_image",
-      twitter_title: parsed.twitter_title || parsed.og_title,
-      twitter_description: parsed.twitter_description || parsed.og_description,
-      image_alt_text: parsed.image_alt_text || input.title,
-      blog_excerpt: parsed.blog_excerpt || "",
-      reading_time_minutes: readingTimeMinutes,
-      faqs: parsed.faqs || [],
+    const content = data.choices[0]?.message?.content
+    if (!content) {
+      throw new Error("Empty response returned from OpenAI.")
     }
+
+    const parsed: GeneratedSeoPayload = JSON.parse(content)
+    parsed.reading_time_minutes = readingTimeMinutes
+    return parsed
   }
 
   /**
-   * Scans and auto-fills SEO metadata for Products, Blogs, and Categories
+   * Scans and auto-fills SEO metadata for Services, Blogs, and Pages
    */
   static async runAutoFillJob(options?: {
-    type?: "product" | "blog" | "category"
+    type?: "service" | "blog" | "page"
     id?: string
     force?: boolean
     limit?: number
@@ -223,18 +220,18 @@ Output ONLY valid JSON without markdown fences matching schema:
       return { processedCount, updatedCount, errors }
     }
 
-    // 2. Batch Scan Products
-    if (!options?.type || options.type === "product") {
+    // 2. Batch Scan Services
+    if (!options?.type || options.type === "service") {
       try {
-        const regions = await listRegions()
-        const regionId = regions?.[0]?.id
-        if (regionId) {
-          const prodRes = await listProducts({ regionId, queryParams: { limit } })
-          const products = prodRes.response.products || []
+        const { data: services } = await supabaseAdmin
+          .from("services")
+          .select("*")
+          .limit(limit)
 
-          for (const product of products) {
+        if (services) {
+          for (const s of services) {
             processedCount++
-            const pageKey = `product:${product.id}`
+            const pageKey = `service:${s.slug}`
             if (!force) {
               const { data: existing } = await supabaseAdmin
                 .from("seo_setting")
@@ -246,22 +243,22 @@ Output ONLY valid JSON without markdown fences matching schema:
 
             try {
               const payload = await this.generateSeoMetadata({
-                type: "product",
-                id: product.id,
-                title: product.title || "",
-                slug: `/products/${product.handle}`,
-                description: product.description || product.subtitle || "",
-                image: product.thumbnail || null,
+                type: "service",
+                id: s.slug,
+                title: s.title || s.short_label || "",
+                slug: `/services/${s.slug}`,
+                description: s.description || s.intro || "",
+                image: s.image || null,
               })
-              await this.saveSeoSetting("product", product.id, `/products/${product.handle}`, payload)
+              await this.saveSeoSetting("service", s.slug, `/services/${s.slug}`, payload)
               updatedCount++
             } catch (err: any) {
-              errors.push(`Product ${product.id} failed: ${err.message}`)
+              errors.push(`Service ${s.slug} failed: ${err.message}`)
             }
           }
         }
       } catch (err: any) {
-        errors.push(`Batch products fetch failed: ${err.message}`)
+        errors.push(`Batch services fetch failed: ${err.message}`)
       }
     }
 
@@ -322,7 +319,7 @@ Output ONLY valid JSON without markdown fences matching schema:
   }
 
   private static async getItemInput(
-    type: "product" | "blog" | "category",
+    type: "service" | "blog" | "page",
     id: string
   ): Promise<SeoGenerationInput | null> {
     if (type === "blog") {
@@ -342,22 +339,20 @@ Output ONLY valid JSON without markdown fences matching schema:
       }
     }
 
-    if (type === "product") {
-      const regions = await listRegions()
-      const regionId = regions?.[0]?.id
-      if (regionId) {
-        const prodRes = await listProducts({ regionId, queryParams: { id: [id] } })
-        const product = prodRes.response.products?.[0]
-        if (product) {
-          return {
-            type: "product",
-            id: product.id,
-            title: product.title || "",
-            slug: `/products/${product.handle}`,
-            description: product.description || product.subtitle || "",
-            image: product.thumbnail || null,
-          }
-        }
+    if (type === "service") {
+      const { data: s } = await supabaseAdmin
+        .from("services")
+        .select("*")
+        .or(`id.eq.${id},slug.eq.${id}`)
+        .single()
+      if (!s) return null
+      return {
+        type: "service",
+        id: s.slug,
+        title: s.title || s.short_label || "",
+        slug: `/services/${s.slug}`,
+        description: s.description || s.intro || "",
+        image: s.image || null,
       }
     }
 
@@ -373,7 +368,7 @@ Output ONLY valid JSON without markdown fences matching schema:
     slug: string,
     payload: GeneratedSeoPayload
   ) {
-    const pageKey = type === "blog" ? `blog:${id}` : type === "product" ? `product:${id}` : `${type}:${id}`
+    const pageKey = `${type}:${id}`
 
     const dataObj = {
       page_key: pageKey,

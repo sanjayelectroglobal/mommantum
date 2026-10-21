@@ -295,23 +295,7 @@ describe("End-to-End Schema Graph Generation", () => {
     expect(names).toEqual(["Home", "Case Studies", "The Kids Store"])
   })
 
-  it("generates Category/CollectionPage graph for store collection (exactly 3 nodes: CollectionPage, ItemList, BreadcrumbList)", async () => {
-    const { resolveCollectionData } = await import("../resolvers/collection")
-    const resolved = resolveCollectionData({
-      section: "store",
-      items: [{ name: "Apparel", handle: "apparel" }],
-    })
-
-    const graph = await generateSchemaGraph(resolved)
-    expect(graph["@graph"].length).toBe(2)
-
-    const types = graph["@graph"].map((n) => n["@type"])
-    expect(types).toEqual(["CollectionPage", "ItemList"])
-
-    const itemListNode = graph["@graph"].find((n) => n["@type"] === "ItemList")
-    expect(itemListNode?.numberOfItems).toBe(1)
-    expect(itemListNode?.itemListElement[0].name).toBe("Apparel")
-  })
+    // Phase 4: Removed store collection test case.
 
   it("generates AboutPage graph for /about (exactly 2 nodes: AboutPage, BreadcrumbList)", async () => {
     const { resolveAboutData } = await import("../resolvers/page")
@@ -347,36 +331,7 @@ describe("End-to-End Schema Graph Generation", () => {
     })
   })
 
-  it("generates Product graph (exactly 3 nodes: Product, WebPage, BreadcrumbList)", async () => {
-    const productResolved: any = {
-      contentType: "product",
-      title: "Sample Product",
-      description: "Sample product description",
-      canonicalUrl: "https://www.mommantum.com/products/sample-product",
-      image: "/images/sample.jpg",
-      keywords: ["sample", "product"],
-      breadcrumbs: [
-        { name: "Home", url: "https://www.mommantum.com/" },
-        { name: "Store", url: "https://www.mommantum.com/store" },
-        { name: "Sample Product", url: "https://www.mommantum.com/products/sample-product" },
-      ],
-      offers: {
-        price: 999,
-        priceCurrency: "INR",
-      },
-    }
-
-    const graph = await generateSchemaGraph(productResolved)
-    expect(graph["@graph"].length).toBe(2)
-
-    const types = graph["@graph"].map((n) => n["@type"])
-    expect(types).toEqual(["Product", "WebPage"])
-
-    const productNode = graph["@graph"].find((n) => n["@type"] === "Product")
-    expect(productNode?.offers?.seller).toEqual({
-      "@id": "https://www.mommantum.com/#organization",
-    })
-  })
+  // Phase 4: Removed store Product schema test case.
 
   it("detects forbidden entities when aggregateRating or review is present", () => {
     const forbiddenGraph = [
@@ -470,12 +425,11 @@ describe("End-to-End Schema Graph Generation", () => {
       { path: "/blog/advantage-automation-business-growth", resolved: resolveBlogData(dummyBlog) },
       { path: "/blog-ai", resolved: resolveCollectionData({ section: "blog", items: [] }) },
       { path: "/editz", resolved: resolveEditzData() },
-      { path: "/store", resolved: resolveCollectionData({ section: "store", items: [] }) },
       { path: "/terms-and-conditions", resolved: resolveLegalPageData("terms-and-conditions", "Terms", "Terms desc") },
       { path: "/privacy-policy", resolved: resolveLegalPageData("privacy-policy", "Privacy", "Privacy desc") },
     ]
 
-    console.log("\n================ 17-ROUTE REAL @type LIST ================")
+    console.log("\n================ 16-ROUTE REAL @type LIST ================")
     for (const r of routes) {
       const graph = await generateSchemaGraph(r.resolved)
       const types = graph["@graph"].map((n) => n["@type"])
@@ -523,9 +477,6 @@ describe("End-to-End Schema Graph Generation", () => {
       } else if (r.path === "/blog/advantage-automation-business-growth") {
         expect(graph["@graph"].length).toBe(2)
         expect(types).toEqual(["BlogPosting", "WebPage"])
-      } else if (r.path === "/store") {
-        expect(graph["@graph"].length).toBe(2)
-        expect(types).toEqual(["CollectionPage", "ItemList"])
       } else {
         // Page type (services, work, legal, editz)
         expect(graph["@graph"].length).toBe(1)

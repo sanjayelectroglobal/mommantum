@@ -29,8 +29,9 @@ function cleanAndDedupeKeywords(rawKeywords: Array<string | undefined | null>): 
   return result.length > 0 ? result.slice(0, 6) : undefined
 }
 
+// Phase 4: Removed store collection option from schema resolver; retained services, work, blog.
 export function resolveCollectionData(options: {
-  section: "services" | "work" | "blog" | "store"
+  section: "services" | "work" | "blog"
   items: CollectionItemInput[]
   seoSetting?: SeoSetting | null
 }): ResolvedData {
@@ -69,14 +70,6 @@ export function resolveCollectionData(options: {
       collectionType: "Blog" as const,
       prefix: "/blog/",
     },
-    store: {
-      title: "Store | Mommantum",
-      description: "Explore all of our products.",
-      path: "/store",
-      name: "Store",
-      collectionType: "CollectionPage" as const,
-      prefix: "/products/",
-    },
   }[section]
 
   const canonicalUrl = `${DEFAULT_BASE_URL}${sectionConfig.path}`
@@ -89,7 +82,7 @@ export function resolveCollectionData(options: {
     ...(seoSetting?.secondary_keywords || []),
   ])
 
-  if (section !== "store" && (!keywords || keywords.length < 5)) {
+  if (!keywords || keywords.length < 5) {
     devWarn(`[${section}] Keyword count is ${keywords?.length || 0} (recommendation: >= 5). Needs keywords from owner.`)
   }
 
@@ -129,8 +122,8 @@ export function resolveCollectionData(options: {
     )
   }
 
-  // Sourced FAQs: agency collection pages get 8-10 FAQs from page-faqs; store gets undefined
-  const faqs = section === "store" ? undefined : getPageFaqs(section)
+  // Sourced FAQs: agency collection pages get 8-10 FAQs from page-faqs
+  const faqs = getPageFaqs(section)
 
   return {
     contentType: "collection",

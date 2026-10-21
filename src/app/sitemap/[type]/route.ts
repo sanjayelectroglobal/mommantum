@@ -1,10 +1,8 @@
+// Phase 4/5: Removed store sub-sitemaps (products, collections, categories) and /store URL from sitemap generator.
 import { getSiteSetting } from "@lib/data/seo"
 import { getServices } from "@lib/data/services"
 import { getBlogPosts } from "@lib/data/blog-posts"
 import { getCaseStudies } from "@lib/data/case-studies"
-import { listProducts } from "@lib/data/products"
-import { listCollections } from "@lib/data/collections"
-import { listCategories } from "@lib/data/categories"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -41,16 +39,15 @@ export async function GET(
 
   if (type === "pages") {
     const pages = [
-      { url: `${baseUrl}`,                     changeFrequency: "daily",   priority: "1.0" },
-      { url: `${baseUrl}/services`,            changeFrequency: "daily",   priority: "0.9" },
-      { url: `${baseUrl}/work`,                changeFrequency: "daily",   priority: "0.9" },
-      { url: `${baseUrl}/blog`,                changeFrequency: "daily",   priority: "0.9" },
-      { url: `${baseUrl}/blog-ai`,             changeFrequency: "daily",   priority: "0.8" },
-      { url: `${baseUrl}/store`,               changeFrequency: "daily",   priority: "0.9" },
-      { url: `${baseUrl}/about`,               changeFrequency: "weekly",  priority: "0.8" },
-      { url: `${baseUrl}/contact`,             changeFrequency: "weekly",  priority: "0.8" },
-      { url: `${baseUrl}/privacy-policy`,      changeFrequency: "monthly", priority: "0.5" },
-      { url: `${baseUrl}/terms-and-conditions`, changeFrequency: "monthly", priority: "0.5" },
+      { url: `${baseUrl}`,                      changeFrequency: "daily",   priority: "1.0" },
+      { url: `${baseUrl}/services`,             changeFrequency: "daily",   priority: "0.9" },
+      { url: `${baseUrl}/work`,                 changeFrequency: "daily",   priority: "0.9" },
+      { url: `${baseUrl}/blog`,                 changeFrequency: "daily",   priority: "0.9" },
+      { url: `${baseUrl}/blog-ai`,              changeFrequency: "daily",   priority: "0.8" },
+      { url: `${baseUrl}/about`,                changeFrequency: "weekly",  priority: "0.8" },
+      { url: `${baseUrl}/contact`,              changeFrequency: "weekly",  priority: "0.8" },
+      { url: `${baseUrl}/privacy-policy`,       changeFrequency: "monthly", priority: "0.5" },
+      { url: `${baseUrl}/terms-and-conditions`,  changeFrequency: "monthly", priority: "0.5" },
     ]
 
     xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -113,63 +110,6 @@ ${caseStudies
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <lastmod>${lastmod}</lastmod>
-  </url>`
-  )
-  .join("\n")}
-</urlset>`
-  } else if (type === "products") {
-    let products: any[] = []
-    try {
-      const res = await listProducts({ countryCode: "in", queryParams: { limit: 100 } })
-      products = res?.response?.products || []
-    } catch (_) {}
-    xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${products
-  .filter((p) => !!p.handle)
-  .map(
-    (p) => `  <url>
-    <loc>${xmlSafe(`${baseUrl}/products/${p.handle}`)}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <lastmod>${new Date(p.updated_at || p.created_at || new Date()).toISOString()}</lastmod>
-  </url>`
-  )
-  .join("\n")}
-</urlset>`
-  } else if (type === "collections") {
-    let collections: any[] = []
-    try {
-      const res = await listCollections({ limit: "100" })
-      collections = res?.collections || []
-    } catch (_) {}
-    xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${collections
-  .filter((c) => !!c.handle)
-  .map(
-    (c) => `  <url>
-    <loc>${xmlSafe(`${baseUrl}/collections/${c.handle}`)}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>${new Date(c.updated_at || c.created_at || new Date()).toISOString()}</lastmod>
-  </url>`
-  )
-  .join("\n")}
-</urlset>`
-  } else if (type === "categories") {
-    let categories: any[] = []
-    try { categories = await listCategories() } catch (_) {}
-    xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${categories
-  .filter((c) => !!c.handle)
-  .map(
-    (c) => `  <url>
-    <loc>${xmlSafe(`${baseUrl}/categories/${c.handle}`)}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>${new Date(c.updated_at || c.created_at || new Date()).toISOString()}</lastmod>
   </url>`
   )
   .join("\n")}
