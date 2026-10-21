@@ -5,6 +5,8 @@ This file defines HOW Mommantum is built and WHERE each piece lives: system part
 *Updated whenever structure, routes or models change · Aligned with production Next.js 15 App Router architecture*
 
 
+> **Note on E-Commerce:** E-commerce store removed on 2026-10-21; Supabase store tables intentionally left untouched. Proposals to drop them are archived in `db-proposals/drop_store_tables_PROPOSAL.sql`.
+
 ## 1. System map
 
 
@@ -13,8 +15,6 @@ This file defines HOW Mommantum is built and WHERE each piece lives: system part
 | Frontend | Next.js 15.3.9 App Router, React 19, Tailwind, Radix UI, Headless UI, Motion, lucide-react, Medusa UI | Renders pages (Server Components first), collects input, calls APIs. No business logic. |
 | Backend | Next.js route handlers in src/app/api/** and server-only modules in src/lib/** | Validation, permissions, calculations, orchestration. There is no separate Node server. |
 | Database / Auth | Supabase PostgreSQL 15, RLS, GoTrue Auth; anon client for public reads, service-role client (supabase-admin.ts) for admin APIs | System of record; sessions; row-level security. |
-| Store engine | In-process Medusa V2 proxy at /api/store/[[...path]] using @medusajs/js-sdk | Maps Medusa storefront calls to Supabase tables (product, cart, region…). |
-| Payments | Stripe (@stripe/react-stripe-js) | Card payments at checkout. |
 | SEO services | Google Indexing API (googleapis), schema engine, sitemap routes | Index notifications, JSON-LD, sitemaps. |
 | AI services | OpenAI / Gemini, AnswerThePublic (RapidAPI), embeddings for link suggestions | SEO auto-fill, blog drafting (via n8n), internal linking. |
 | Automation | n8n workflow (mommantum_supabase.json), Vercel cron | Blog ingestion; keep-alive; monthly SEO auto-fill. |
@@ -24,8 +24,8 @@ This file defines HOW Mommantum is built and WHERE each piece lives: system part
 ## 2. Responsibility rule (this project)
 
 - **Frontend displays:** components in src/modules and src/app pages render data, loading and error states, and call APIs or server data functions.
-- **Backend owns:** price and total calculation, cart ownership checks, role checks, slug and SEO validation, schema generation, revalidation, indexing.
-- **Example:** product price and cart totals come from /api/store and src/lib/util/money.ts/get-product-price.ts on the server side of the flow; components only format and show them.
+- **Backend owns:** validation, role checks, slug and SEO validation, schema generation, revalidation, indexing.
+- **Example:** service descriptions and SEO metadata come from server data functions and resolvers; components only format and show them.
 - **Example:** admin roles are decided by roles.ts plus a database lookup in auth-helpers.ts, never by a cookie the browser can edit.
 
 ## 3. Folder structure (exact tree)
@@ -46,32 +46,27 @@ mommantum-main/
 │   │   ├── layout.tsx, robots.ts, opengraph-image.jpg, twitter-image.jpg
 │   │   ├── sitemap/route.ts, sitemap/[type]/route.ts
 │   │   ├── (store)/ about, blog, blog-ai, contact, editz, faq, services, work,
-│   │   │            privacy-policy, terms-and-conditions, (main)/ home, store, products,
-│   │   │            collections, categories, cart, order, account (@dashboard, @login)
-│   │   ├── (checkout)/checkout/
-│   │   ├── admin/ (services, blog, case-studies, products, orders, seo, users, ...)
+│   │   │            privacy-policy, terms-and-conditions, (main)/ home
+│   │   ├── admin/ (services, blog, case-studies, seo, users, ...)
 │   │   ├── admin-login/
-│   │   └── api/ admin/*, auth/*, blog/publish, cron/seo-auto-fill, keep-alive, store/*
+│   │   └── api/ admin/*, auth/*, blog/publish, cron/seo-auto-fill, keep-alive, store/internal-linking/*
 │   ├── lib/
 │   │   ├── config/roles.ts           RBAC matrix (admin, manager, seo, content_manager, ...)
-│   │   ├── config.ts                 Medusa SDK client pointed at /api
 │   │   ├── auth-helpers.ts           session + role verification
 │   │   ├── supabase.ts / supabase-server.ts / supabase-admin.ts
 │   │   ├── revalidate.ts             revalidateContent({type, slug, oldSlug})
 │   │   ├── validation.ts             Zod schemas
 │   │   ├── fonts.ts                  Epilogue, Outfit, Mansalva, Cormorant Garamond, DM Sans
 │   │   ├── data/                     fetch layer: services, blog-posts, case-studies, seo, page-faqs, home-faqs,
-│   │   │                             all-faqs, cart, orders, products, collections, categories, customer, regions,
-│   │   │                             payment, fulfillment, onboarding, locales, cookies, variants
+│   │   │                             all-faqs, onboarding, locales, cookies
 │   │   ├── schema/                   generate-graph.ts (orchestrator), build-graph.ts, serialize.ts (XSS-safe),
-│   │   │                             validate.ts, config.ts, site.ts, page-defaults.ts, strip-ecommerce.ts,
+│   │   │                             validate.ts, config.ts, site.ts, page-defaults.ts,
 │   │   │                             resolvers/ (page, service, blog, case-study, collection),
-│   │   │                             templates/ (12 node builders), __tests__/
+│   │   │                             templates/ (11 node builders), __tests__/
 │   │   ├── services/                 ai-seo-service, indexer, linking-service
-│   │   ├── util/ env, money, product, sort-products, medusa-error, linker ...
+│   │   ├── util/ env, linker ...
 │   │   ├── hooks/ , context/modal-context.tsx
-│   │   ├── modules/  (domain UI) account, cart, categories, checkout, collections, common,
-│   │             contact, editz, home, layout, order, products, shipping, skeletons, store
+│   │   ├── modules/  (domain UI) common, contact, editz, home, layout
 │   ├── components/ KeepAlive.tsx, RelatedLinks.tsx
 │   ├── styles/globals.css            Tailwind layers + input and autofill utilities
 │   └── types/
@@ -88,9 +83,9 @@ mommantum-main/
 | Content | services, case_studies, post (blog), testimonials, site_setting, site_keywords | Slug unique; FAQs and keywords stored as data; schema_json column kept but no longer read. |
 | SEO | seo_setting (also referenced as seo_settings, verify), link_suggestion, link_embedding, organization_profile (proposed) | seo_setting keyed by page_key; embeddings power internal links; organization_profile is the single business-facts row. |
 | Identity | profiles (role), customer | Role from profiles table, verified server-side. Roles: admin, manager, seo, content_manager and others in roles.ts. |
-| Catalog | product, product_variant, product_collection, product_category, price_set, price, product_variant_price_set | Medusa-compatible shape. |
-| Cart / Order | cart, cart_line_item, cart_address, cart_shipping_method, order, order_item, order_line_item, order_address | Cart access must be bound to its owner. |
-| Region / shipping | region, region_country, shipping_option | Default region "in", currency INR. |
+| Catalog (Legacy) | product, product_variant, product_collection, product_category, price_set, price, product_variant_price_set | Store removed 2026-10-21; Supabase tables preserved untouched (unexecuted proposal in db-proposals/). |
+| Cart / Order (Legacy) | cart, cart_line_item, cart_address, cart_shipping_method, order, order_item, order_line_item, order_address | Store removed 2026-10-21; Supabase tables preserved untouched. |
+| Region / shipping (Legacy) | region, region_country, shipping_option | Store removed 2026-10-21; Supabase tables preserved untouched. |
 
 *Action: run a schema export from Supabase and paste the exact column lists here (field, type, relation, validation). Code scanning confirms table names and usage; exact columns must be copied from the live database because no DDL ships in the zip except db-proposals.*
 
@@ -106,12 +101,10 @@ mommantum-main/
 | /api/admin/blog, /blog/[slug], /blog/images | GET POST PUT DELETE | admin, manager, seo, content_manager | Blog CRUD, image upload, revalidate "blog-posts". |
 | /api/admin/case-studies, /[id] | CRUD | admin, manager | Case studies, revalidate "case-studies". |
 | /api/admin/seo, /seo/site, /seo/preview, /seo/internal-linking/* | GET PUT POST | admin, manager | seo_setting rows, site SEO, preview, link sync/test. |
-| /api/admin/products, collections, categories, orders (+ /[id]) | CRUD | admin, manager | Store management. |
 | /api/admin/users (+ /[id]), stats, keywords (+ /[id]), custom/meta-listing, jobs/seo-auto-fill | mixed | admin (users) / role list | User management and operations. |
 | /api/blog/publish | POST | Secret header (n8n) | Ingestion; triggers indexer + revalidation. |
 | /api/cron/seo-auto-fill | GET | CRON_SECRET (must be enforced) | Monthly AI SEO fill. 401 if secret wrong. |
 | /api/keep-alive | GET | Public (cron) | Daily DB ping. |
-| /api/store/[[...path]] | All | Cart owner / public | Medusa-compatible: products, carts, shipping-options, payment-collections. |
 | /api/store/internal-linking/[type]/[id] | GET | Public | Related link suggestions. |
 | /sitemap, /sitemap/[type] | GET | Public | XML sitemaps. |
 
@@ -144,7 +137,7 @@ Target changes from the audit: never read the sb-role cookie; no automatic admin
 
 ## 8. Error flow
 
-Supabase/Stripe error → data function or route handler → typed error (medusa-error.ts for store calls) → route returns standard error JSON with status → client shows a clear message → page-level error.tsx boundary. No empty catch blocks (the current middleware parseJwt catch returns null by design and is commented).
+Supabase error → data function or route handler → typed error → route returns standard error JSON with status → client shows a clear message → page-level error.tsx boundary. No empty catch blocks (the current middleware parseJwt catch returns null by design and is commented).
 
 
 ## 9. Performance plan
@@ -163,8 +156,7 @@ Supabase/Stripe error → data function or route handler → typed error (medusa
 |---|---|
 | Home, About, Contact, FAQ, Legal, Editz | SSG/ISR |
 | Services, Work, Blog (index and detail) | ISR with tag revalidation |
-| Store, products, collections, categories | ISR / dynamic with cache tags |
-| Cart, checkout, account, order, admin | Dynamic SSR, noindex |
+| Admin | Dynamic SSR, noindex |
 | sitemap, robots | Route handlers / metadata routes |
 
 
@@ -177,7 +169,7 @@ Supabase/Stripe error → data function or route handler → typed error (medusa
 | staging | To create: Vercel preview; noindex forced | Separate Supabase project recommended |
 | production | www.mommantum.com on Vercel | Vercel env vars; indexable |
 
-**Environment variables** (documented in .env.example, no values): NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_BASE_URL, NEXT_PUBLIC_MEDUSA_BACKEND_URL, NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY, NEXT_PUBLIC_MEDUSA_PAYMENTS_ACCOUNT_ID, NEXT_PUBLIC_MEDUSA_PAYMENTS_PUBLISHABLE_KEY, NEXT_PUBLIC_STRIPE_KEY, STRIPE_API_KEY, STRIPE_SECRET_KEY, ADMIN_SECRET, CRON_SECRET, CUSTOM_ADMIN_PATH, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, OPENAI_API_KEY, RAPIDAPI_KEY, ANSWER_THE_PUBLIC_KEY, VERCEL_URL.
+**Environment variables** (documented in .env.example, no values): NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_BASE_URL, ADMIN_SECRET, CRON_SECRET, CUSTOM_ADMIN_PATH, GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, OPENAI_API_KEY, RAPIDAPI_KEY, ANSWER_THE_PUBLIC_KEY, VERCEL_URL.
 
 
 ## 12. Dynamic SEO and schema architecture
@@ -228,7 +220,6 @@ Setup: copy .env.example to .env.local, fill values from the secret holder, run 
 | Case study | tag case-studies; /work, /work/{slug} |
 | SEO setting | seo tag; the page path of that page_key |
 | Site setting | revalidatePath("/", "layout") |
-| Store product / collection | Medusa-style proxy cache tags; store paths |
 
 Every admin save API must call revalidateContent() from src/lib/revalidate.ts, otherwise the public page stays stale.
 
@@ -245,12 +236,11 @@ Every admin save API must call revalidateContent() from src/lib/revalidate.ts, o
 
 ## 17. Admin panel pages
 
-src/app/admin contains: services, blog, case-studies, products, collections, categories, orders, customers, inventory, promotions, price-lists, pages, seo, sitemap and users, with shared _components and _lib. Access per role is defined in src/lib/config/roles.ts; hidden path controlled by CUSTOM_ADMIN_PATH.
+src/app/admin contains: services, blog, case-studies, pages, seo, sitemap and users, with shared _components and _lib. Access per role is defined in src/lib/config/roles.ts; hidden path controlled by CUSTOM_ADMIN_PATH.
 
 
 ## 18. Third-party failure handling
 
-- Stripe down: checkout shows a clear error, cart is kept.
 - Google Indexing API fails: log and continue; publishing is never blocked.
 - OpenAI/Gemini/RapidAPI fail or time out: skip auto-fill for that item, retry next run.
 - Supabase slow: cached pages keep serving; admin shows an error message.

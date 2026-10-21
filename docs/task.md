@@ -4,6 +4,8 @@ This file holds the technical plan for each task, written BEFORE coding using a 
 
 *One plan per task, newest on top · Finished plans move to Archive*
 
+> **Note on E-Commerce:** E-commerce store removed on 2026-10-21; Supabase store tables intentionally left untouched. Proposals to drop them are in `db-proposals/drop_store_tables_PROPOSAL.sql`.
+
 
 ## NTF-301 (T-01) · Security hardening: close audit findings V-01 to V-08
 
@@ -20,7 +22,7 @@ Attackers can currently escalate to admin by editing a cookie, a service-role ke
 - ☐ First login never creates an admin; unknown user gets 403 (V-03)
 - ☐ /api/cron/seo-auto-fill returns 401 without the correct CRON_SECRET (V-04)
 - ☐ Mutating /api/admin/* rejects a wrong Origin with 403 (V-05)
-- ☐ A cart or order cannot be read with another user's id (V-06)
+- [x] Store system removed on 2026-10-21; cart and checkout endpoints eliminated (V-06 resolved via removal)
 - ☐ Role cache has a size cap and TTL (V-08)
 - ☐ /api/auth/dev-login disabled when NODE_ENV is production
 - ☐ .env.local removed from any shared archive
@@ -37,7 +39,7 @@ No new routes. Touches /api/auth/*, /api/admin/*, /api/cron/seo-auto-fill, /api/
 
 ### 5. Files to create / change
 
-src/lib/auth-helpers.ts, src/middleware.ts, src/lib/supabase-admin.ts, src/app/api/cron/seo-auto-fill/route.ts, src/app/api/auth/dev-login/route.ts, src/app/api/store/[[...path]]/route.ts, new src/lib/util/origin-check.ts. Reuse existing roles.ts and isPathAllowed.
+src/lib/auth-helpers.ts, src/middleware.ts, src/lib/supabase-admin.ts, src/app/api/cron/seo-auto-fill/route.ts, src/app/api/auth/dev-login/route.ts, new src/lib/util/origin-check.ts. Reuse existing roles.ts and isPathAllowed.
 
 
 ### 6. Edge cases and failure cases
@@ -189,7 +191,6 @@ Routes return different shapes and live outside /api/v1, so the frontend guesses
 - ☐ Helper ok()/fail() in src/lib/util/api-response.ts returns { success, data, error, meta }
 - ☐ All list endpoints accept page and limit and return meta.total
 - ☐ Admin routes available under /api/v1/admin/* with the old paths redirecting for one release
-- ☐ Store proxy keeps Medusa-compatible shapes (documented exception)
 - ☐ architecture.md route map updated in the same PR
 
 ### 3. Where the logic lives
@@ -299,7 +300,7 @@ Page speed is a ranking and conversion factor, and no baseline exists. Done mean
 
 ### 2. Acceptance criteria
 
-- ☐ Baseline saved for home, a service page, a blog page and the store (Lighthouse mobile and desktop, LCP, INP, CLS)
+- ☐ Baseline saved for home, a service page and a blog page (Lighthouse mobile and desktop, LCP, INP, CLS)
 - ☐ Top issues ranked by impact with evidence from code or reports
 - ☐ Fixes applied incrementally; each re-measured
 - ☐ Before/after table, files changed, trade-offs and remaining issues reported

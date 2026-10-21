@@ -10,13 +10,14 @@ This file defines WHAT Mommantum builds and WHY: who the users are, the goals an
 **Mommantum** (legal name Mommantum, founded 2025-12-15, Jaipur, Rajasthan; about 15 team members) is a growth agency for high-growth D2C brands. Prospective clients today find agencies through referrals, Google search and social media, then have to piece together services, proof of results and pricing from scattered sources. There is no single place that shows what the agency does, proves it with case studies, answers their questions, and lets them contact the team or buy a packaged offering.
 
 
+> **Note on E-Commerce:** E-commerce store removed on 2026-10-21; Supabase store tables intentionally left untouched.
+
 | User | Need | How they solve it today |
 |---|---|---|
 | D2C brand founder / marketing head (India and international) | Evaluate an agency fast: services, proof of ROI, how to start | Referrals, Google, Instagram/LinkedIn, calls |
 | Prospect from search (SEO/GEO/AEO traffic) | Direct, trustworthy answers to service questions | Competitor sites, generic blogs |
 | Video-content buyer (Editz) | Short-form video, motion graphics, podcast, AI video | Freelancers, marketplaces |
-| Shopper / package buyer | Buy a packaged product through cart and checkout | Email/WhatsApp invoices |
-| Mommantum admin (admin, manager, seo, content_manager roles) | Edit services, blogs, case studies, SEO, products, orders without developers | Direct DB or developer help |
+| Mommantum admin (admin, manager, seo, content_manager roles) | Edit services, blogs, case studies, SEO without developers | Direct DB or developer help |
 | Search engines and AI answer engines | Clean structured data (JSON-LD), sitemaps, canonical, FAQs | n/a |
 
 
@@ -41,9 +42,7 @@ This file defines WHAT Mommantum builds and WHY: who the users are, the goals an
 - **Work:** As a prospect, I can read case studies at /work and /work/[slug] with measurable results.
 - **Blog:** As a reader, I can read articles at /blog, /blog/[slug] and AI-focused articles at /blog-ai; as an automation (n8n), I can publish posts through POST /api/blog/publish.
 - **Company pages:** About, Contact (lead and onboarding forms), FAQ directory, Privacy Policy, Terms and Conditions.
-- **Store:** As a shopper, I can browse /store, products, collections and categories, add to cart, check out (Stripe), and view orders in /account.
-- **Account:** As a customer, I can register, log in, manage profile, addresses and order history, and accept or decline order transfers.
-- **Admin suite:** As an admin I can manage Services, Case Studies, Blogs (with images), SEO settings and site-wide SEO, Keywords, Products, Collections, Categories, Orders, Customers, Inventory, Promotions, Price lists, Pages, Sitemap and Users, restricted by role.
+- **Admin suite:** As an admin I can manage Services, Case Studies, Blogs (with images), SEO settings and site-wide SEO, Keywords, Pages, Sitemap and Users, restricted by role.
 - **Dynamic SEO engine:** As the business, every page gets title, description, canonical, OG and a single connected JSON-LD @graph from one resolver, matching visible content exactly.
 - **Automation:** Monthly AI SEO auto-fill cron, Google Indexing API notification on publish, internal-link suggestions via embeddings, daily Supabase keep-alive.
 
@@ -54,26 +53,26 @@ This file defines WHAT Mommantum builds and WHY: who the users are, the goals an
 | Feature | Acceptance criteria |
 |---|---|
 | Public pages | Every public page returns 200, renders server-side (view-source shows content), has exactly one H1, a self-referencing canonical, one <script type="application/ld+json"> tag. |
-| Metadata parity | Title, description, canonical and og:image in <head> equal the WebPage node in JSON-LD for all 10 route types. |
+| Metadata parity | Title, description, canonical and og:image in <head> equal the WebPage node in JSON-LD for all remaining route types. |
 | Schema integrity | FAQPage lists exactly the FAQs visible on the page (service FAQs 40–60 words, max 8; home 5). No aggregateRating or review nodes. Missing optional fields are omitted, never invented. |
 | Admin access | Unauthenticated request to the admin path returns 404 (custom path) or 307 to /admin-login; each role reaches only paths listed in roles.ts; role is verified from the database, never from a cookie. |
 | Hidden panels | /admin/schema and /api/admin/schema always return 404. |
 | Sitemaps | /sitemap and /sitemap/[type] list all published URLs and update when content is created, edited or deleted. |
 | Revalidation | Saving a service, blog, case study, SEO row or site setting refreshes the affected tags and paths through revalidateContent(). |
-| Cart and checkout | Cart totals, shipping and region pricing are calculated on the server; a cart can only be read or changed by its owner (no IDOR). |
 | Cron | /api/cron/seo-auto-fill rejects requests without the correct CRON_SECRET; /api/keep-alive runs daily. |
 | Quality gates | tsc --noEmit, lint, vitest and build all pass before release. |
 
 
 ## 5. Out of scope
 
-1. **Standalone Medusa Backend Server:** In-process proxy at `/api/store/[[...path]]` maps directly to Supabase tables, eliminating the need for a separate Medusa Node.js backend server.
-2. **Multi-Currency & International Region Handling (Phase 1):** Country prefix `/in` has been removed. The default region is `in`, default currency is INR, and primary target geography is India (`en-IN`).
-3. **Native Mobile Applications:** iOS and Android native applications are out of scope. Responsive Next.js 15 App Router web application serves all mobile users down to 320px.
-4. **Public Review System & Rating Aggregate:** No unverified user reviews or Schema.org `aggregateRating`/`review` nodes will be added to avoid Google search manual actions without verified proof.
-5. **Per-Page Custom Schema Ingestion in Admin:** `/admin/schema` and `/api/admin/schema` are permanently removed; all structured data is deterministically derived from data resolvers.
-6. **Direct Client-Side Database Access:** Supabase credentials with elevated privileges are never exposed to the browser; all mutations flow through authenticated server-side API handlers.
-7. **Production Direct Database Writes from Local Dev:** Dev environments cannot write directly to the production Supabase database; all schema changes must follow the `db-proposals/` review process.
+1. **E-Commerce / Store System:** E-commerce store (cart, checkout, product catalog, customer accounts, Medusa proxy) removed on 2026-10-21; Supabase store tables intentionally left untouched.
+2. **Standalone Medusa Backend Server:** No Medusa server exists or is needed.
+3. **Multi-Currency & International Region Handling (Phase 1):** Country prefix `/in` has been removed. The default region is `in`, default currency is INR, and primary target geography is India (`en-IN`).
+4. **Native Mobile Applications:** iOS and Android native applications are out of scope. Responsive Next.js 15 App Router web application serves all mobile users down to 320px.
+5. **Public Review System & Rating Aggregate:** No unverified user reviews or Schema.org `aggregateRating`/`review` nodes will be added to avoid Google search manual actions without verified proof.
+6. **Per-Page Custom Schema Ingestion in Admin:** `/admin/schema` and `/api/admin/schema` are permanently removed; all structured data is deterministically derived from data resolvers.
+7. **Direct Client-Side Database Access:** Supabase credentials with elevated privileges are never exposed to the browser; all mutations flow through authenticated server-side API handlers.
+8. **Production Direct Database Writes from Local Dev:** Dev environments cannot write directly to the production Supabase database; all schema changes must follow the `db-proposals/` review process.
 
 
 ## 6. SEO goals and target keywords
@@ -86,7 +85,7 @@ Target keywords live in the database (site_keywords, services.keywords) and are 
 - **Hosting:** Vercel serverless; crons limited to those in vercel.json (daily keep-alive, monthly SEO auto-fill).
 - **Database:** Supabase production project; no direct writes to production from dev. SQL goes through db-proposals and a human operator.
 - **Compliance:** DPDP Act 2023 (consent, minimum data, deletion on request); GSTIN shown publicly only as client approved.
-- **Integrations:** Stripe, Google Indexing API, Google Search Console, OpenAI / Gemini, AnswerThePublic via RapidAPI, n8n.
+- **Integrations:** Google Indexing API, Google Search Console, OpenAI / Gemini, AnswerThePublic via RapidAPI, n8n.
 - **Currency / locale:** INR, en-IN.
 - **Dependencies:** no new package without a one-line reason and approval.
 
