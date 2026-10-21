@@ -33,13 +33,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     "Bytespider",
   ]
 
+  // Phase 5: Removed deleted store routes (/account/, /wishlist/, /cart/, /checkout/, /order/, /order-success/).
   const commonDisallows = [
-    "/account/",
-    "/wishlist/",
-    "/cart/",
-    "/checkout/",
-    "/order/",
-    "/order-success/",
     "/verify-email/",
     "/reset-password/",
     "/api/",
@@ -59,9 +54,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         userAgent: aiUserAgents,
         allow: "/",
         disallow: [
-          "/account/",
-          "/cart/",
-          "/checkout/",
           "/admin/",
           "/admin-login",
           "/api/",

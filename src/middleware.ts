@@ -62,15 +62,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/about") ||
     pathname.startsWith("/faq") ||
     pathname.startsWith("/privacy-policy") ||
-    pathname.startsWith("/terms-and-conditions") ||
-    pathname.startsWith("/products") ||
-    pathname.startsWith("/collections") ||
-    pathname.startsWith("/categories") ||
-    pathname.startsWith("/cart") ||
-    pathname.startsWith("/store") ||
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/order") ||
-    pathname.startsWith("/checkout")
+    // Phase 5: Removed deleted store paths from public route bypass.
+    pathname.startsWith("/terms-and-conditions")
 
   if (isPublicRoute) {
     return NextResponse.next()
