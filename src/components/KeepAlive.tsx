@@ -2,17 +2,7 @@
 
 import { useEffect } from "react"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
-
-// Extract the first URL if there are multiple comma-separated URLs
-const getBackendUrl = () => {
-  if (BACKEND_URL.includes(",")) {
-    return BACKEND_URL.split(",")[0].trim()
-  }
-  return BACKEND_URL
-}
-
+// KeepAlive client ping for Next.js and Supabase
 export default function KeepAlive() {
   // In development, do not poll backend or send keep-alive requests
   if (process.env.NODE_ENV !== "production") {
