@@ -27,7 +27,7 @@ export interface ResolvedData {
   description: string
   canonicalUrl: string
   image?: string
-  keywords: string[]
+  keywords?: string[]
   datePublished?: string
   dateModified?: string
   breadcrumbs: BreadcrumbEntry[]
@@ -41,8 +41,12 @@ export interface ResolvedData {
     url?: string
   }
   // Blog extras
+  headline?: string
   authorName?: string
   articleSection?: string
+  wordCount?: number
+  isPartOf?: Record<string, any>
+  tags?: string[]
   // Case study extras
   clientName?: string
   relatedServiceId?: string
@@ -56,12 +60,16 @@ export interface ResolvedData {
  * Ensures <title>, meta description, canonical, OG, and Twitter match JSON-LD 1-to-1.
  */
 export function buildMetadataFromResolved(resolved: ResolvedData): Metadata {
+  const isArticle = resolved.contentType === "blog" || resolved.contentType === "case-study"
+  const ogImageUrl = resolved.image || "https://www.mommantum.com/opengraph-image.jpg"
+  const twitterImageUrl = resolved.image || "https://www.mommantum.com/twitter-image.jpg"
+
   return {
     metadataBase: new URL("https://www.mommantum.com"),
     title: resolved.title,
     description: resolved.description,
     applicationName: "Mommantum",
-    keywords: resolved.keywords.length ? resolved.keywords : undefined,
+    keywords: resolved.keywords && resolved.keywords.length ? resolved.keywords : undefined,
     alternates: resolved.canonicalUrl ? { canonical: resolved.canonicalUrl } : undefined,
     robots: {
       index: true,
@@ -72,14 +80,32 @@ export function buildMetadataFromResolved(resolved: ResolvedData): Metadata {
       description: resolved.description,
       url: resolved.canonicalUrl,
       siteName: "Mommantum",
-      type: resolved.contentType === "blog" || resolved.contentType === "case-study" ? "article" : "website",
-      images: resolved.image ? [resolved.image] : ["https://www.mommantum.com/opengraph-image.jpg"],
+      locale: "en_IN",
+      type: isArticle ? "article" : "website",
+      ...(resolved.contentType === "blog"
+        ? {
+            publishedTime: resolved.datePublished,
+            modifiedTime: resolved.dateModified,
+            authors: resolved.authorName ? [resolved.authorName] : undefined,
+            section: resolved.articleSection,
+            tags: resolved.keywords && resolved.keywords.length ? resolved.keywords : undefined,
+          }
+        : {}),
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: resolved.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: resolved.title,
       description: resolved.description,
-      images: resolved.image ? [resolved.image] : ["https://www.mommantum.com/twitter-image.jpg"],
+      images: [twitterImageUrl],
     },
   }
 }
+

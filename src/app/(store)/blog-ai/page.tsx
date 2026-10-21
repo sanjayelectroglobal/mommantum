@@ -1,16 +1,20 @@
 import { Metadata } from "next"
 import { getSeoSetting } from "@lib/data/seo"
+import { getPageMetaDefault } from "@lib/schema/page-defaults"
+import { getPageFaqs } from "@lib/data/page-faqs"
 import { resolveLegalPageData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import JsonLd from "@modules/common/components/json-ld"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 
 export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
   const seoSetting = await getSeoSetting("blog-ai").catch(() => null)
+  const defaultMeta = getPageMetaDefault("blog-ai")!
   const resolved = resolveLegalPageData(
     "blog-ai",
-    "Blog AI | Mommantum",
-    "Leverage AI-driven content systems and blog automation by Mommantum.",
+    defaultMeta.title,
+    defaultMeta.description,
     seoSetting
   )
   return buildMetadataFromResolved(resolved)
@@ -18,14 +22,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BlogAiPage() {
   const seoSetting = await getSeoSetting("blog-ai").catch(() => null)
+  const defaultMeta = getPageMetaDefault("blog-ai")!
+  const faqs = getPageFaqs("blog-ai")
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] bg-white text-slate-900 px-6 py-12 text-center animate-in fade-in duration-500">
       <JsonLd
         type="page"
         slug="blog-ai"
-        title="Blog AI | Mommantum"
-        description="Leverage AI-driven content systems and blog automation by Mommantum."
+        title={defaultMeta.title}
+        description={defaultMeta.description}
         seoSetting={seoSetting}
       />
       <div className="max-w-xl mx-auto space-y-6">
@@ -47,6 +53,15 @@ export default async function BlogAiPage() {
           </a>
         </div>
       </div>
+      {faqs && faqs.length > 0 && (
+        <div className="w-full max-w-4xl mx-auto mt-16 text-left">
+          <PageFaqSection
+            faqs={faqs}
+            title="Blog AI FAQs"
+            subtitle="Everything you need to know about Mommantum AI blog automation, editorial pipelines, and LLM workflows."
+          />
+        </div>
+      )}
     </div>
   )
 }

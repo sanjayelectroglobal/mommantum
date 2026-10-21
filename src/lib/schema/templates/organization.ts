@@ -6,13 +6,14 @@ export interface OrganizationTemplateOptions {
   profile: OrganizationProfile
   full?: boolean
   includeFounder?: boolean
+  keywords?: string[]
 }
 
 /**
  * Creates Organization schema.
  * Full version ONLY on Homepage (@id #organization).
  * Fully self-contained: nested logo (ImageObject), nested founder (Person),
- * hasMerchantReturnPolicy, contactPoint, address, sameAs, knowsAbout.
+ * contactPoint, address, sameAs, knowsAbout. (Service agency: no store / return-policy data.)
  * Non-home pages link to #organization via reference only and do not emit full node.
  */
 export function createOrganizationSchema(options: OrganizationTemplateOptions): Record<string, any> {
@@ -20,7 +21,7 @@ export function createOrganizationSchema(options: OrganizationTemplateOptions): 
   const orgId = getEntityId(baseUrl, "#organization")
 
   const fullOrg: Record<string, any> = {
-    "@type": ["Organization", "OnlineStore"],
+    "@type": "Organization",
     "@id": orgId,
     name: profile.name,
     legalName: profile.legalName || profile.name,
@@ -63,14 +64,6 @@ export function createOrganizationSchema(options: OrganizationTemplateOptions): 
           addressCountry: profile.address.addressCountry,
         }
       : undefined,
-    hasMerchantReturnPolicy: {
-      "@type": "MerchantReturnPolicy",
-      applicableCountry: "IN",
-      returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-      merchantReturnDays: 7,
-      returnMethod: "https://schema.org/ReturnByMail",
-      returnFees: "https://schema.org/FreeReturn",
-    },
     knowsAbout: [
       "Performance Marketing",
       "Digital Marketing",
@@ -81,6 +74,13 @@ export function createOrganizationSchema(options: OrganizationTemplateOptions): 
     ],
     areaServed: profile.areaServed?.length ? profile.areaServed : undefined,
     sameAs: profile.sameAs?.length ? profile.sameAs : undefined,
+  }
+
+  if (options.keywords && options.keywords.length > 0) {
+    const cleanKeywords = Array.from(new Set(options.keywords.map((k) => k.trim()).filter(Boolean))).slice(0, 6)
+    if (cleanKeywords.length > 0) {
+      fullOrg.keywords = cleanKeywords.join(", ")
+    }
   }
 
   if (profile.founder?.name) {

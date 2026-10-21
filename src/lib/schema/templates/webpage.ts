@@ -13,6 +13,8 @@ export interface WebPageTemplateOptions {
   mainEntityId?: string
   includeWebSite?: boolean
   hasPart?: Record<string, any> | null
+  /** Full BreadcrumbList node; nested inside the WebPage (WebPage.breadcrumb) so both live in one place. */
+  breadcrumb?: Record<string, any> | null
 }
 
 /**
@@ -37,6 +39,7 @@ export function createWebPageSchema(options: WebPageTemplateOptions): Record<str
     mainEntityId,
     includeWebSite = true,
     hasPart,
+    breadcrumb,
   } = options
 
   const webpageId = getEntityId(pageUrl, "#webpage")
@@ -52,7 +55,8 @@ export function createWebPageSchema(options: WebPageTemplateOptions): Record<str
     about: {
       "@id": orgId,
     },
-    breadcrumb: {
+    // BreadcrumbList is nested here (not a separate graph node) so the reference and the list stay together.
+    breadcrumb: breadcrumb || {
       "@id": breadcrumbId,
     },
     inLanguage: DEFAULT_IN_LANGUAGE,

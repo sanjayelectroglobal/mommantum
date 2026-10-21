@@ -3,6 +3,8 @@ import { getCaseStudies, getTestimonials, teamMember } from "@lib/data/case-stud
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveCollectionData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import JsonLd from "@modules/common/components/json-ld"
+import { getPageFaqs } from "@lib/data/page-faqs"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 import WorkPage from "./_components/WorkClient"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,6 +32,7 @@ export default async function WorkPageServer({
     getTestimonials(),
     getSeoSetting("work").catch(() => null),
   ])
+  const faqs = getPageFaqs("work")
 
   return (
     <>
@@ -45,6 +48,13 @@ export default async function WorkPageServer({
         testimonials={testimonials}
         teamMember={teamMember}
       />
+      {faqs && faqs.length > 0 && (
+        <PageFaqSection
+          faqs={faqs}
+          title="Case Studies & Results FAQs"
+          subtitle="Everything you need to know about our client case studies, methodologies, attribution, and growth deliverables."
+        />
+      )}
     </>
   )
 }

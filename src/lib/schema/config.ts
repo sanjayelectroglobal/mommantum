@@ -2,6 +2,32 @@ export const SCHEMA_CONTEXT = "https://schema.org"
 export const DEFAULT_BASE_URL = "https://www.mommantum.com"
 export const DEFAULT_IN_LANGUAGE = "en-IN"
 
+/**
+ * Main navigation links shown in the site header (same order as the NavBar).
+ * Single source for the Home page BreadcrumbList.
+ */
+export const SITE_NAV_LINKS: Array<{ name: string; path: string }> = [
+  { name: "Editz", path: "/editz" },
+  { name: "Services", path: "/services" },
+  { name: "Blog AI", path: "/blog-ai" },
+  { name: "About", path: "/about" },
+  { name: "Case Studies", path: "/work" },
+  { name: "Blog", path: "/blog" },
+]
+
+/** Video services shown under the Editz page (same links as the NavBar video-services list). */
+export const EDITZ_SERVICE_LINKS: Array<{ name: string; path: string }> = [
+  { name: "AI Video Generation", path: "/services/ai-video-generation" },
+  { name: "Content and Video Scripting", path: "/services/content-video-scripting" },
+  { name: "Video Editing", path: "/services/video-editing" },
+  { name: "AI Video Editing", path: "/services/ai-video-editing" },
+  { name: "Podcast Editing", path: "/services/podcast-editing" },
+  { name: "Motion Graphics", path: "/services/motion-graphics" },
+]
+
+/** How many latest blog posts are listed in the /blog BreadcrumbList. */
+export const BLOG_BREADCRUMB_LATEST_COUNT = 6
+
 export type SchemaContentType =
   | "homepage"
   | "about"

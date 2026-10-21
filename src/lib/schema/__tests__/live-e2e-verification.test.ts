@@ -17,29 +17,29 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
     {
       pageType: "home",
       url: "/",
-      expectedTypes: ["WebSite", "Organization", "WebPage", "BreadcrumbList"],
-      expectedCount: 4,
+      expectedTypes: ["WebSite", "Organization", "WebPage"],
+      expectedCount: 3,
       resolver: () => resolveHomepageData(null),
     },
     {
       pageType: "page",
       url: "/about",
-      expectedTypes: ["AboutPage", "BreadcrumbList"],
-      expectedCount: 2,
+      expectedTypes: ["AboutPage"],
+      expectedCount: 1,
       resolver: () => resolveAboutData(null),
     },
     {
       pageType: "page",
       url: "/contact",
-      expectedTypes: ["ContactPage", "BreadcrumbList"],
-      expectedCount: 2,
+      expectedTypes: ["ContactPage"],
+      expectedCount: 1,
       resolver: () => resolveContactData(null),
     },
     {
       pageType: "page",
       url: "/services/performance-marketing",
-      expectedTypes: ["WebPage", "BreadcrumbList"],
-      expectedCount: 2,
+      expectedTypes: ["WebPage"],
+      expectedCount: 1,
       resolver: () =>
         resolveServiceData({
           slug: "performance-marketing",
@@ -62,15 +62,15 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
     {
       pageType: "blog_index",
       url: "/blog",
-      expectedTypes: ["WebPage", "BreadcrumbList"],
-      expectedCount: 2,
+      expectedTypes: ["WebPage"],
+      expectedCount: 1,
       resolver: () => resolveCollectionData({ section: "blog", items: [] }),
     },
     {
       pageType: "blog_post",
       url: "/blog/scale-d2c",
-      expectedTypes: ["BlogPosting", "WebPage", "BreadcrumbList"],
-      expectedCount: 3,
+      expectedTypes: ["BlogPosting", "WebPage"],
+      expectedCount: 2,
       resolver: () =>
         resolveBlogData({
           id: "p1",
@@ -93,8 +93,8 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
     {
       pageType: "product",
       url: "/products/sample-product",
-      expectedTypes: ["Product", "WebPage", "BreadcrumbList"],
-      expectedCount: 3,
+      expectedTypes: ["Product", "WebPage"],
+      expectedCount: 2,
       resolver: () => ({
         contentType: "product" as const,
         title: "Sample Product | Mommantum",
@@ -116,8 +116,8 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
     {
       pageType: "category",
       url: "/store",
-      expectedTypes: ["CollectionPage", "ItemList", "BreadcrumbList"],
-      expectedCount: 3,
+      expectedTypes: ["CollectionPage", "ItemList"],
+      expectedCount: 2,
       resolver: () =>
         resolveCollectionData({
           section: "store",
@@ -154,9 +154,6 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
 
       // 5. Assert NO unlisted types are present
       const allowedSet = new Set(page.expectedTypes)
-      if (page.pageType === "home") {
-        allowedSet.add("OnlineStore") // Allowed alias/co-type on Organization
-      }
       for (const actualType of topLevelTypes) {
         expect(
           allowedSet.has(actualType),
@@ -218,50 +215,50 @@ describe("Step 5 Automated Verification: Exact Schema Node Matrix Per Page Type"
       {
         name: "Home Page",
         props: { type: "homepage" },
-        expectedCount: 4,
-        expectedTypes: ["WebSite", "Organization", "WebPage", "BreadcrumbList"],
+        expectedCount: 3,
+        expectedTypes: ["WebSite", "Organization", "WebPage"],
       },
       {
         name: "About Page",
         props: { type: "about" },
-        expectedCount: 2,
-        expectedTypes: ["AboutPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["AboutPage"],
       },
       {
         name: "Contact Page",
         props: { type: "contact" },
-        expectedCount: 2,
-        expectedTypes: ["ContactPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["ContactPage"],
       },
       {
         name: "Services Listing (treated as page)",
         props: { type: "collection", section: "services", items: [] },
-        expectedCount: 2,
-        expectedTypes: ["WebPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["WebPage"],
       },
       {
         name: "Blog Listing (blog_index)",
         props: { type: "collection", section: "blog", items: [] },
-        expectedCount: 2,
-        expectedTypes: ["WebPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["WebPage"],
       },
       {
         name: "Store Listing (category)",
         props: { type: "collection", section: "store", items: [{ name: "Apparel", handle: "apparel" }] },
-        expectedCount: 3,
-        expectedTypes: ["CollectionPage", "ItemList", "BreadcrumbList"],
+        expectedCount: 2,
+        expectedTypes: ["CollectionPage", "ItemList"],
       },
       {
         name: "Legal Page (privacy-policy)",
         props: { type: "page", slug: "privacy-policy", title: "Privacy Policy", description: "Privacy info" },
-        expectedCount: 2,
-        expectedTypes: ["WebPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["WebPage"],
       },
       {
         name: "Editz Landing Page (treated as page)",
         props: { type: "editz" },
-        expectedCount: 2,
-        expectedTypes: ["WebPage", "BreadcrumbList"],
+        expectedCount: 1,
+        expectedTypes: ["WebPage"],
       },
     ]
 

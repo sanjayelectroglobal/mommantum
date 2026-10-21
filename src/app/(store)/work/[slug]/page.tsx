@@ -7,6 +7,8 @@ import { getCaseStudies, getCaseStudy } from "@lib/data/case-studies"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveCaseStudyData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import { epilogue, outfit, mansalva } from "@lib/fonts"
+import { getPageFaqs } from "@lib/data/page-faqs"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -265,6 +267,21 @@ export default async function CaseStudyDetailPage({ params }: Props) {
               </div>
             </div>
           )}
+
+          {/* Visible Case Study FAQs */}
+          {(() => {
+            const faqs = getPageFaqs(`work:${study.slug}`)
+            if (!faqs || faqs.length === 0) return null
+            return (
+              <div className="mt-12">
+                <PageFaqSection
+                  faqs={faqs}
+                  title={`${study.title} FAQs`}
+                  subtitle="Everything you need to know about the strategy, execution, and outcomes delivered in this case study."
+                />
+              </div>
+            )
+          })()}
 
           {/* Bottom CTA */}
           <div

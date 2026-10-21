@@ -18,6 +18,7 @@ import {
 } from "@lib/schema/resolvers"
 import { generateSchemaGraph, detectPageType, filterAndDeduplicateNodes } from "@lib/schema/generate-graph"
 import { serializeJsonLd } from "@lib/schema/serialize"
+import { stripEcommerceArtifacts } from "@lib/schema/strip-ecommerce"
 
 export type JsonLdProps =
   | { type: "homepage"; seoSetting?: SeoSetting | null }
@@ -35,10 +36,11 @@ export type JsonLdProps =
   | { type: "editz"; seoSetting?: SeoSetting | null }
   | {
       type: "page"
-      slug: "privacy-policy" | "terms-and-conditions" | "blog-ai"
+      slug: "privacy-policy" | "terms-and-conditions" | "blog-ai" | "faq"
       title: string
       description: string
       seoSetting?: SeoSetting | null
+      faqs?: Array<{ question: string; answer: string }>
     }
   | { type?: never; resolved: ResolvedData }
 
@@ -86,7 +88,8 @@ export default async function JsonLd(props: JsonLdProps) {
           props.slug,
           props.title,
           props.description,
-          props.seoSetting
+          props.seoSetting,
+          props.faqs
         )
         break
       default:
@@ -134,7 +137,7 @@ export default async function JsonLd(props: JsonLdProps) {
   // Final safety filter before output: drop any node whose @type is not allowed for this page type,
   // and de-duplicate by @id and @type.
   const pageType = detectPageType(resolved)
-  graph["@graph"] = filterAndDeduplicateNodes(graph["@graph"], pageType)
+  graph["@graph"] = filterAndDeduplicateNodes(graph["@graph"], pageType).map((n) => stripEcommerceArtifacts(n))
 
   const jsonLdString = serializeJsonLd(graph)
 

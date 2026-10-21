@@ -19,14 +19,14 @@
 import { useState } from "react"
 import Link from "next/link"
 import { epilogue, outfit } from "@lib/fonts"
-import { HOMEPAGE_FOOTER_FAQS, FAQItem } from "@lib/data/all-faqs"
+import { getPageFaqs } from "@lib/data/page-faqs"
 
-export default function FooterFaqSection({ customFaqs }: { customFaqs?: FAQItem[] }) {
+export default function FooterFaqSection({ customFaqs }: { customFaqs?: Array<{ question: string; answer: string; id?: string }> }) {
   // Track currently active FAQ index (null = all collapsed)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  // Use provided FAQs or default to the 4 curated homepage footer FAQs
-  const faqs = customFaqs && customFaqs.length > 0 ? customFaqs.slice(0, 4) : HOMEPAGE_FOOTER_FAQS
+  // Use provided FAQs or default to all 8 curated homepage FAQs (visible count = schema count)
+  const faqs = customFaqs && customFaqs.length > 0 ? customFaqs : getPageFaqs("homepage")
 
   // Toggle open state for a given question index
   const handleToggle = (index: number) => {

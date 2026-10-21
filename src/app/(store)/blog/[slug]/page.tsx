@@ -662,6 +662,13 @@ export default async function BlogDetailPage(props: {
                 </div>
               )}
 
+              {/* FAQs Accordion */}
+              {post.faqs && post.faqs.length > 0 && (
+                <div className="mt-10 lg:mt-14">
+                  <BlogFaqAccordion faqs={post.faqs.slice(0, 10)} />
+                </div>
+              )}
+
               {/* Bottom CTA */}
               <div
                 className="relative mt-10 overflow-hidden rounded-[20px] p-6 text-center shadow-[0_16px_40px_rgba(14,37,71,0.18)] sm:p-8 lg:mt-14 lg:rounded-[24px] lg:p-12 lg:shadow-[0_18px_50px_rgba(14,37,71,0.2)]"

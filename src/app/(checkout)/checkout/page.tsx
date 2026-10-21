@@ -7,7 +7,15 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
-  title: "Checkout",
+  title: "Checkout | Mommantum",
+  description: "Complete your checkout securely with Mommantum.",
+  alternates: {
+    canonical: "https://www.mommantum.com/checkout",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function Checkout() {

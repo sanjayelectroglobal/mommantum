@@ -2,17 +2,21 @@ import { Metadata } from "next"
 import { epilogue, outfit, mansalva } from "@lib/fonts"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { getSeoSetting } from "@lib/data/seo"
+import { getPageMetaDefault } from "@lib/schema/page-defaults"
+import { getPageFaqs } from "@lib/data/page-faqs"
 import { resolveLegalPageData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import JsonLd from "@modules/common/components/json-ld"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 
 export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
   const seoSetting = await getSeoSetting("privacy-policy").catch(() => null)
+  const defaultMeta = getPageMetaDefault("privacy-policy")!
   const resolved = resolveLegalPageData(
     "privacy-policy",
-    "Privacy Policy | Mommantum",
-    "Read how Mommantum collects, uses, and protects information on its website.",
+    defaultMeta.title,
+    defaultMeta.description,
     seoSetting
   )
   return buildMetadataFromResolved(resolved)
@@ -20,14 +24,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PrivacyPolicyPage() {
   const seoSetting = await getSeoSetting("privacy-policy").catch(() => null)
+  const defaultMeta = getPageMetaDefault("privacy-policy")!
+  const faqs = getPageFaqs("privacy-policy")
 
   return (
     <main className="relative overflow-hidden bg-[#f7f8fa] pt-14 pb-20 lg:pt-20 lg:pb-24">
       <JsonLd
         type="page"
         slug="privacy-policy"
-        title="Privacy Policy | Mommantum"
-        description="Read how Mommantum collects, uses, and protects information on its website."
+        title={defaultMeta.title}
+        description={defaultMeta.description}
         seoSetting={seoSetting}
       />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -111,6 +117,16 @@ export default async function PrivacyPolicyPage() {
             ))}
 
           </div>
+
+          {faqs && faqs.length > 0 && (
+            <div className="mt-12">
+              <PageFaqSection
+                faqs={faqs}
+                title="Privacy Policy FAQs"
+                subtitle="Common questions regarding how Mommantum collects, uses, and safeguards your data."
+              />
+            </div>
+          )}
 
           {/* CTA */}
           <div

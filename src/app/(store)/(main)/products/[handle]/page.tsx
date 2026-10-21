@@ -78,7 +78,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       handle,
     ],
     {
-      title: `${product.title} | Medusa Store`,
+      title: `${product.title} | Mommantum`,
       description: product.description || `${product.title}`,
       canonicalPath: `/products/${handle}`,
       image: product.thumbnail,

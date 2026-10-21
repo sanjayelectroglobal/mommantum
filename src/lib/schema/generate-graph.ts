@@ -14,7 +14,7 @@ import { createItemListSchema } from "./templates/item-list"
 export type SchemaPageType = "home" | "page" | "blog_index" | "blog_post" | "product" | "category"
 
 export const ALLOWED_SCHEMA_MATRIX: Record<SchemaPageType, string[]> = {
-  home: ["WebSite", "Organization", "OnlineStore", "WebPage", "BreadcrumbList"],
+  home: ["WebSite", "Organization", "WebPage", "BreadcrumbList"],
   page: ["WebPage", "AboutPage", "ContactPage", "BreadcrumbList"],
   blog_index: ["WebPage", "BreadcrumbList"],
   blog_post: ["BlogPosting", "WebPage", "BreadcrumbList"],
@@ -81,7 +81,7 @@ export function filterAndDeduplicateNodes(
     if (!node || typeof node !== "object") continue
 
     const rawType = node["@type"]
-    // Handle array types e.g. ["Organization", "OnlineStore"]
+    // Handle array types e.g. ["Organization", "Thing"]
     const types = Array.isArray(rawType) ? rawType : [rawType]
     const isAllowed = types.some((t) => allowedTypes.has(t))
 
@@ -152,7 +152,7 @@ export async function generateSchemaGraph(
 
   switch (pageType) {
     case "home": {
-      // EXACTLY 4 NODES: WebSite, Organization, WebPage (with nested FAQPage), BreadcrumbList
+      // EXACTLY 3 NODES: WebSite, Organization, WebPage (with nested FAQPage + nested BreadcrumbList)
       const websiteNode = createWebSiteSchema({
         baseUrl,
         profile,
@@ -165,6 +165,7 @@ export async function generateSchemaGraph(
         baseUrl,
         profile,
         full: true,
+        keywords: resolved.keywords,
       })
       rawNodes.push(orgNode)
 
@@ -178,10 +179,10 @@ export async function generateSchemaGraph(
         keywords: resolved.keywords,
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(webPageNode)
 
-      rawNodes.push(breadcrumbNode)
       break
     }
 
@@ -203,9 +204,9 @@ export async function generateSchemaGraph(
         keywords: resolved.keywords,
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(webPageNode)
-      rawNodes.push(breadcrumbNode)
       break
     }
 
@@ -221,9 +222,9 @@ export async function generateSchemaGraph(
         keywords: resolved.keywords,
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(webPageNode)
-      rawNodes.push(breadcrumbNode)
       break
     }
 
@@ -232,7 +233,7 @@ export async function generateSchemaGraph(
       const blogPostingNode = createBlogPostingSchema({
         pageUrl: resolved.canonicalUrl,
         baseUrl,
-        headline: resolved.title,
+        headline: resolved.headline || resolved.title,
         description: resolved.description,
         image: resolved.image,
         authorName: resolved.authorName,
@@ -240,6 +241,8 @@ export async function generateSchemaGraph(
         dateModified: resolved.dateModified,
         articleSection: resolved.articleSection,
         keywords: resolved.keywords,
+        wordCount: resolved.wordCount,
+        isPartOf: resolved.isPartOf,
       })
       rawNodes.push(blogPostingNode)
 
@@ -254,10 +257,10 @@ export async function generateSchemaGraph(
         mainEntityId: getEntityId(resolved.canonicalUrl, "#article"),
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(webPageNode)
 
-      rawNodes.push(breadcrumbNode)
       break
     }
 
@@ -287,10 +290,10 @@ export async function generateSchemaGraph(
         mainEntityId: getEntityId(resolved.canonicalUrl, "#product"),
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(webPageNode)
 
-      rawNodes.push(breadcrumbNode)
       break
     }
 
@@ -307,6 +310,7 @@ export async function generateSchemaGraph(
         mainEntityId: getEntityId(resolved.canonicalUrl, "#itemlist"),
         hasPart: faqNode,
         includeWebSite: true,
+        breadcrumb: breadcrumbNode,
       })
       rawNodes.push(collectionPageNode)
 
@@ -320,7 +324,6 @@ export async function generateSchemaGraph(
       })
       rawNodes.push(itemListNode)
 
-      rawNodes.push(breadcrumbNode)
       break
     }
   }

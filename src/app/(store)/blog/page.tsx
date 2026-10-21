@@ -6,6 +6,8 @@ import { getBlogPosts } from "@lib/data/blog-posts"
 import { getSeoSetting } from "@lib/data/seo"
 import { resolveCollectionData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import { epilogue, outfit, mansalva } from "@lib/fonts"
+import { getPageFaqs } from "@lib/data/page-faqs"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 
 export const revalidate = 60
 
@@ -247,6 +249,14 @@ export default async function BlogPage() {
           </div>
         </div>
       </div>
+
+      {getPageFaqs("blog") && getPageFaqs("blog").length > 0 && (
+        <PageFaqSection
+          faqs={getPageFaqs("blog")}
+          title="Mommantum Blog FAQs"
+          subtitle="Everything you need to know about our growth frameworks, SEO playbooks, and publication standards."
+        />
+      )}
     </main>
   )
 }

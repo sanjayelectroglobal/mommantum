@@ -2,17 +2,21 @@ import { Metadata } from "next"
 import { epilogue, outfit, mansalva } from "@lib/fonts"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { getSeoSetting } from "@lib/data/seo"
+import { getPageMetaDefault } from "@lib/schema/page-defaults"
+import { getPageFaqs } from "@lib/data/page-faqs"
 import { resolveLegalPageData, buildMetadataFromResolved } from "@lib/schema/resolvers"
 import JsonLd from "@modules/common/components/json-ld"
+import PageFaqSection from "@modules/common/components/page-faq-section"
 
 export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
   const seoSetting = await getSeoSetting("terms-and-conditions").catch(() => null)
+  const defaultMeta = getPageMetaDefault("terms-and-conditions")!
   const resolved = resolveLegalPageData(
     "terms-and-conditions",
-    "Terms & Conditions | Mommantum",
-    "Read the terms and conditions for using Mommantum services and website.",
+    defaultMeta.title,
+    defaultMeta.description,
     seoSetting
   )
   return buildMetadataFromResolved(resolved)
@@ -20,14 +24,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TermsAndConditionsPage() {
   const seoSetting = await getSeoSetting("terms-and-conditions").catch(() => null)
+  const defaultMeta = getPageMetaDefault("terms-and-conditions")!
+  const faqs = getPageFaqs("terms-and-conditions")
 
   return (
     <main className="relative overflow-hidden bg-[#f7f8fa] pt-14 pb-20 lg:pt-20 lg:pb-24">
       <JsonLd
         type="page"
         slug="terms-and-conditions"
-        title="Terms & Conditions | Mommantum"
-        description="Read the terms and conditions for using Mommantum services and website."
+        title={defaultMeta.title}
+        description={defaultMeta.description}
         seoSetting={seoSetting}
       />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -125,6 +131,16 @@ export default async function TermsAndConditionsPage() {
               </div>
             ))}
           </div>
+
+          {faqs && faqs.length > 0 && (
+            <div className="mt-12">
+              <PageFaqSection
+                faqs={faqs}
+                title="Terms & Conditions FAQs"
+                subtitle="Common questions regarding service agreements, payment schedules, and client contracts."
+              />
+            </div>
+          )}
 
           {/* CTA */}
           <div

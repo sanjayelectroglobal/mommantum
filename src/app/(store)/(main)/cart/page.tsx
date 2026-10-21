@@ -5,8 +5,15 @@ import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
-  title: "Cart",
-  description: "View your cart",
+  title: "Shopping Cart | Mommantum",
+  description: "View and manage items in your shopping cart before checkout.",
+  alternates: {
+    canonical: "https://www.mommantum.com/cart",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function Cart() {

@@ -12,6 +12,8 @@ export interface BlogPostingTemplateOptions {
   dateModified?: string
   articleSection?: string
   keywords?: string[]
+  wordCount?: number
+  isPartOf?: Record<string, any>
 }
 
 /**
@@ -33,6 +35,8 @@ export function createBlogPostingSchema(options: BlogPostingTemplateOptions): Re
     dateModified,
     articleSection,
     keywords,
+    wordCount,
+    isPartOf,
   } = options
 
   if (headline && headline.length > 110) {
@@ -93,6 +97,14 @@ export function createBlogPostingSchema(options: BlogPostingTemplateOptions): Re
     if (cleanKeywords.length > 0) {
       articleNode.keywords = cleanKeywords.join(", ")
     }
+  }
+
+  if (wordCount !== undefined && wordCount > 0) {
+    articleNode.wordCount = wordCount
+  }
+
+  if (isPartOf) {
+    articleNode.isPartOf = isPartOf
   }
 
   return articleNode

@@ -297,45 +297,46 @@ export const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
+// Sources: src/modules/editz/lib/data.ts (SERVICES, PROCESS_STEPS, BENEFIT_CARDS), Keywords_for_MM.xlsx ('video editing')
 export const FAQS: FAQItem[] = [
   {
-    question: 'What types of videos do you edit?',
-    answer: 'We edit Short-Form content (TikTok, Instagram Reels, YouTube Shorts), Long-Form YouTube videos, Podcasts, Video Essays, and Direct Response Social Ad Creatives.',
+    question: 'What types of video content does EDITZ by Mommantum produce?',
+    answer: 'EDITZ produces short-form video edits for Instagram Reels, YouTube Shorts, and TikTok, alongside high-retention long-form YouTube videos, video podcast episodes, documentary essays, and direct-response paid social ad creatives engineered specifically to stop scrolling, engage target viewers, and drive sustainable commercial conversions.',
     category: 'Services',
   },
   {
-    question: 'How fast can you deliver my video?',
-    answer: 'Most short-form videos are delivered within 24–48 hours, while long-form projects typically take 3–5 business days, depending on complexity.',
+    question: 'What is the typical delivery timeline for video editing projects?',
+    answer: 'Our standard delivery timeframe for short-form video edits is between 24 and 48 hours from raw footage receipt. For long-form YouTube videos, podcasts, and complex multi-camera productions, deliverables are typically completed within 3 to 5 business days, depending on scope.',
     category: 'Timeline',
   },
   {
-    question: 'Do you offer revisions?',
-    answer: 'Yes. Every project includes revisions to make sure the final edit matches your vision, style, and expectations.',
+    question: 'Do video editing packages include revisions and style adjustments?',
+    answer: 'Yes. Every project engagement includes iterative revision cycles to ensure the final cut matches your exact creative direction, pacing preferences, and brand aesthetic. We collaborate closely with you to refine pacing, audio balance, captions, and visual emphasis before final delivery.',
     category: 'Process',
   },
   {
-    question: 'Can you improve my content flow and retention hooks?',
-    answer: 'Absolutely. We can help structure your footage, strengthen the opening hook, improve pacing, add pattern interrupts, and keep viewers engaged.',
+    question: 'Can EDITZ help improve viewer retention hooks and narrative pacing?',
+    answer: 'Yes. Beyond simple clip cutting, our editors analyze footage structure to craft powerful opening 3-second hooks, remove conversational dead air, insert visual pattern interrupts, and maintain tight narrative momentum that maximizes audience retention and platform watch time across all formats.',
     category: 'Strategy',
   },
   {
-    question: 'Do you provide captions, motion graphics, and sound design?',
-    answer: 'Yes. We can include animated captions, motion graphics, transitions, sound effects, music, B-roll, and other elements depending on your editing requirements.',
+    question: 'Do you provide animated captions, motion graphics, and sound design?',
+    answer: 'Yes. Our comprehensive editing process includes custom kinetic typography, animated captions, motion graphic overlays, color grading, visual transitions, atmospheric sound design, dynamic sound effects, and carefully selected royalty-free background music tailored to elevate overall production value for every single video project.',
     category: 'Features',
   },
   {
-    question: 'How do we start working together?',
-    answer: "Simply send us your footage and tell us what you're looking for. We'll discuss the style, requirements, timeline, and deliverables before getting started.",
+    question: 'How do creators and brands onboard and start working with EDITZ?',
+    answer: 'Onboarding is fast and simple. Share your raw video footage via Google Drive, Dropbox, or Frame.io, along with your target format, reference styles, and primary goals. Our team reviews your footage, confirms specifications, and begins crafting your initial cut immediately.',
     category: 'Onboarding',
   },
   {
-    question: 'Do you edit specifically for social media algorithms?',
-    answer: "Yes. We optimize edits for each platform's viewing behavior, including strong hooks, fast pacing, captions, retention-focused cuts, and platform-specific formats.",
+    question: 'Are your video edits optimized specifically for social media algorithms?',
+    answer: 'Yes. Every edit is engineered around native platform consumption patterns. We optimize aspect ratios, place text safely within platform interface margins, calibrate hook timing for quick-swipe feeds, and structure pacing to encourage full completion rates, rewatches, shares, and algorithmic distribution.',
     category: 'Optimization',
   },
   {
-    question: 'Can you edit videos in my existing style?',
-    answer: "Yes. Send us a few examples of videos you like or your existing content, and we'll match the editing style, pacing, captions, and overall visual language.",
+    question: 'Can you match my existing brand visual identity and editing style?',
+    answer: 'Yes. Simply share existing video examples or a brand style guide outlining your preferred typography, brand color codes, pacing rhythm, and visual tone. Our editors will systematically match and maintain your established aesthetic consistently across every piece of delivered video content.',
     category: 'Style',
   },
 ];

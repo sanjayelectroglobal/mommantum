@@ -29,14 +29,6 @@ export function createWebSiteSchema(options: WebSiteTemplateOptions): Record<str
     publisher: {
       "@id": orgId,
     },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${baseUrl.replace(/\/+$/, "")}/search?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   }
 
   if (keywords && keywords.length > 0) {

@@ -1,0 +1,154 @@
+SCHEMA MARKUP
+Types of schema
+
+A Home page
+
+1. Website schema
+2. Organisation schema
+3. Local schema (not on Mommantum)
+4. Webpage
+5. Breadcrumb list
+B page Schema
+
+C Blog Schema
+ 
+D product schema
+
+E Category Schema
+
+
+Here is the full list in one place. Every schema block has a Target Keywords line, every page has FAQs nested inside its WebPage, and every page has the OG and Facebook fields.
+How the Facebook fields work: Facebook reads the Open Graph tags, so FB Title, FB Description, FB URL and FB Featured Image are filled through the same og: tags. If you want different text on Facebook than on other platforms, that isn't possible with standard tags. Only fb:app_id is Facebook-only. Twitter/X has its own tags, listed below.
+Common to every page
+Social / sharing fields
+FAQ block (nested inside the WebPage on every page)
+WebPage → hasPart → FAQPage
+@id: {page-url}#faq
+Target Keywords: inside each question and answer
+mainEntity → 4–8 Question objects
+name: the question, containing the keyword
+acceptedAnswer → Answer → text: 40–60 words
+The FAQs must be visible on the page.
+BreadcrumbList
+@id: #breadcrumb
+itemListElement → ListItem with position, name, item (URL)
+Target Keywords: in each name. BreadcrumbList has no keywords property, so the names carry them.
+A. Home Page (og:type = website)
+1. WebSite
+@id (#website), name, url, alternateName, description, inLanguage (en-IN)
+Target Keywords: keywords
+publisher → #organization
+potentialAction → SearchAction (target.urlTemplate, query-input)
+2. Organization / OnlineStore
+@id (#organization), name, legalName, url, description, slogan
+Target Keywords: keywords, knowsAbout
+logo (ImageObject with url, width, height), image
+sameAs (all social profiles)
+contactPoint → telephone, email, contactType, areaServed, availableLanguage
+address → streetAddress, addressLocality, addressRegion, postalCode, addressCountry
+email, telephone, foundingDate, founder (Person), numberOfEmployees
+taxID (GSTIN), identifier (CIN / DPIIT)
+hasMerchantReturnPolicy
+3. LocalBusiness / ElectronicsStore (only if customers can visit)
+@id (#localbusiness), name, description, url, telephone, image
+Target Keywords: keywords, areaServed
+address (PostalAddress), geo (latitude, longitude), hasMap
+openingHoursSpecification → dayOfWeek, opens, closes
+priceRange, parentOrganization → #organization
+aggregateRating, only if reviews are visible on the page
+4. WebPage (with FAQs)
+@id (#webpage), url, name, description, inLanguage
+Target Keywords: keywords, about
+isPartOf → #website, about → #organization
+primaryImageOfPage: the same image as the featured image
+datePublished, dateModified, breadcrumb → #breadcrumb
+speakable → cssSelector
+hasPart → FAQPage. Question themes: products and brands sold, pan-India delivery, GST invoice, bulk/B2B pricing, returns, genuine parts
+5. BreadcrumbList: Home
+6. Social fields: all of the common fields
+B. Page Schema: About / Contact / Policy / Landing (og:type = website)
+WebPage subtype (AboutPage / ContactPage / WebPage)
+@id, url, name, description, inLanguage
+Target Keywords: keywords, about → Thing / DefinedTerm
+mainEntity → #organization (About and Contact pages)
+isPartOf → #website, publisher → #organization
+primaryImageOfPage: the same image as the featured image
+datePublished, dateModified, breadcrumb
+hasPart → FAQPage. About: who you are and what's different. Contact: support hours and order tracking. Policy pages: timelines and refunds
+BreadcrumbList: Home › Page
+Social fields: all of the common fields
+C. Blog Schema (og:type = article)
+BlogPosting
+@id (#article), headline (110 characters or fewer), description, inLanguage
+Target Keywords: keywords, about, mentions, articleSection
+image (array in 16:9, 4:3 and 1:1; the first image is the featured image)
+datePublished, dateModified
+author → Person with name, url, jobTitle, image, sameAs
+publisher → #organization
+mainEntityOfPage → #webpage, isPartOf → Blog
+wordCount, citation
+WebPage (with FAQs)
+@id, url, name, description
+Target Keywords: keywords
+isPartOf → #website, breadcrumb, primaryImageOfPage
+hasPart → FAQPage, using "People Also Ask" questions for the post's keyword
+BreadcrumbList: Home › Blog › Category › Post
+Social fields: all of the common fields, plus article:published_time, article:modified_time, article:author, article:section, article:tag (one tag per keyword), twitter:creator
+D. Product Schema (og:type = product)
+Product
+@id (#product), name, description, url, image (array; the first image is the featured image)
+Target Keywords: keywords, category, additionalProperty names
+sku, mpn, gtin (only if a real barcode exists), brand → Brand, manufacturer
+additionalProperty → PropertyValue with name, value, unitCode (specs)
+color, material, weight, size
+isVariantOf → ProductGroup with productGroupID, variesBy, hasVariant
+offers → Offer
+price, priceCurrency (INR), availability, itemCondition, url, priceValidUntil
+seller → #organization
+eligibleQuantity (MOQ), priceSpecification (tier pricing)
+shippingDetails → shippingRate, shippingDestination, deliveryTime (handlingTime, transitTime)
+hasMerchantReturnPolicy → applicableCountry, returnPolicyCategory, merchantReturnDays, returnMethod, returnFees
+aggregateRating (ratingValue, reviewCount, bestRating) and review (author, reviewRating, reviewBody, datePublished), only if visible on the page
+WebPage / ItemPage (with FAQs)
+@id, url, name, description
+Target Keywords: keywords
+mainEntity → #product, isPartOf → #website, breadcrumb, primaryImageOfPage
+hasPart → FAQPage. Question themes: specs, voltage, compatibility, what's in the box, warranty, bulk pricing, delivery time
+BreadcrumbList: Home › Category › Sub-category › Product
+Social fields: all of the common fields, plus product:price:amount, product:price:currency, product:availability, product:brand, product:condition, product:retailer_item_id
+E. Category Schema (og:type = website)
+CollectionPage (with FAQs)
+@id, url, name, description, inLanguage
+Target Keywords: keywords, about → Thing / DefinedTerm
+mainEntity → #itemlist, isPartOf → #website, breadcrumb
+primaryImageOfPage: the category banner, same as the featured image
+hasPart → FAQPage. Question themes: how to choose, price range in India, original brands, bulk availability
+ItemList
+@id (#itemlist), numberOfItems, itemListOrder
+Target Keywords: in each item's name (ItemList has no keywords property)
+itemListElement → ListItem with position, url, name, image
+BreadcrumbList: Home › Category › Sub-category
+Social fields: all of the common fields
+Rules for every page:
+Use 1 primary and 3–5 secondary keywords.
+Every keyword and FAQ must also appear in the visible page content.
+The featured image should be the same image in og:image and in the schema (primaryImageOfPage or image).
+Before going live, validate with the Rich Results Test and the Facebook Sharing Debugger.
+A Home page MM
+Editz
+Blog ai
+
+1. Website schema
+2. Organisation schema
+4. Webpage
+5. Breadcrumb list
+B page Schema
+
+C Blog Schema
+ 
+D product schema
+
+E Category Schema
+Services page
+Blog
+Case study
