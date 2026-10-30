@@ -86,7 +86,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "You can reach out directly by emailing kuldeep@mommantum.in, calling or sending a WhatsApp message to +91 7742276031, or submitting the contact form on our website. We will discuss your current revenue targets, examine your active channels, and recommend an actionable growth plan."
     }
   ],
-  // Sources: src/lib/schema/site.ts (address, telephone, email, openingHours), src/app/(store)/contact/page.tsx
+  // Sources: src/lib/schema/site.ts (address, telephone, email, openingHours), src/app/(site)/contact/page.tsx
   "contact": [
     {
       "question": "What are Mommantum's official office working hours?",
@@ -121,7 +121,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "When you reach out, you speak directly with experienced practitioners and founders, including Kuldeep Ahir, rather than an aggressive junior sales representative. We take time to understand your operational reality and provide candid feedback on what will genuinely drive growth for your business."
     }
   ],
-  // Sources: src/lib/data/services.ts, src/app/(store)/services/page.tsx
+  // Sources: src/lib/data/services.ts, src/app/(site)/services/page.tsx
   "services": [
     {
       "question": "What core digital marketing services does Mommantum offer?",
@@ -191,7 +191,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "We partner with ambitious founders who are committed to sustainable, data-driven scaling. Contact us today through our website form, email, or WhatsApp to share your store metrics, discuss your growth goals, and explore how our team can help write your brand's success story."
     }
   ],
-  // Sources: src/lib/data/blog-posts.ts, src/app/(store)/blog/page.tsx
+  // Sources: src/lib/data/blog-posts.ts, src/app/(site)/blog/page.tsx
   "blog": [
     {
       "question": "What topics does the Mommantum blog focus on?",
@@ -261,7 +261,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "Yes. Simply share existing video examples or a brand style guide outlining your preferred typography, brand color codes, pacing rhythm, and visual tone. Our editors will systematically match and maintain your established aesthetic consistently across every piece of delivered video content."
     }
   ],
-  // Sources: src/lib/data/all-faqs.ts, src/lib/schema/site.ts, src/app/(store)/faq/page.tsx
+  // Sources: src/lib/data/all-faqs.ts, src/lib/schema/site.ts, src/app/(site)/faq/page.tsx
   "faq": [
     {
       "question": "What does Mommantum do as a growth agency?",
@@ -304,7 +304,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "We start with a detailed discovery consultation to review your existing store data, revenue targets, and marketing challenges. Following this audit, we deliver a transparent strategic roadmap, agree on project milestones and deliverables, and begin immediate execution with weekly progress check-ins."
     }
   ],
-  // Sources: src/app/(store)/blog-ai/page.tsx, ANTIGRAVITY_PROMPT (2).md
+  // Sources: src/app/(site)/blog-ai/page.tsx, ANTIGRAVITY_PROMPT (2).md
   "blog-ai": [
     {
       "question": "What is Blog AI by Mommantum?",
@@ -339,7 +339,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "Contact the Mommantum team through our website or email to schedule an initial consultation. We will audit your current organic search visibility, map out strategic content opportunities, and structure a scalable publishing schedule tailored directly to your brand's growth goals."
     }
   ],
-  // Sources: src/app/(store)/privacy-policy/page.tsx (Sections 1-9: Data, Usage, Cookies, Third-Parties, Security, Rights, Retention, Changes, Contact)
+  // Sources: src/app/(site)/privacy-policy/page.tsx (Sections 1-9: Data, Usage, Cookies, Third-Parties, Security, Rights, Retention, Changes, Contact)
   "privacy-policy": [
     {
       "question": "What types of personal information does Mommantum collect?",
@@ -374,7 +374,7 @@ export const PAGE_FAQS_MAP: Record<string, PageFAQ[]> = {
       "answer": "For any inquiries, questions, or specific data requests concerning this Privacy Policy, you can reach out directly to our privacy team by emailing kuldeep@mommantum.in or sending postal correspondence to our studio office at B-147, Anand Vihar, Jagatpura, Jaipur-302017, Rajasthan, India."
     }
   ],
-  // Sources: src/app/(store)/terms-and-conditions/page.tsx (Sections 1-12: Acceptance, Scope, Responsibilities, Payments, IP, Liability, Termination, Law, Contact)
+  // Sources: src/app/(site)/terms-and-conditions/page.tsx (Sections 1-12: Acceptance, Scope, Responsibilities, Payments, IP, Liability, Termination, Law, Contact)
   "terms-and-conditions": [
     {
       "question": "What do the Mommantum Terms and Conditions govern?",

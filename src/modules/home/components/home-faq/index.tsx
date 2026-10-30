@@ -1,6 +1,6 @@
 import { epilogue, outfit, mansalva } from "@lib/fonts"
 import { HOME_FAQS, HomeFAQ } from "@lib/data/home-faqs"
-import FaqAccordion from "app/(store)/services/[slug]/_components/FaqAccordion"
+import FaqAccordion from "app/(site)/services/[slug]/_components/FaqAccordion"
 
 interface HomeFaqProps {
   faqs?: HomeFAQ[]

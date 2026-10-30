@@ -1,11 +1,13 @@
 {
-  "name": "medusa-next",
+  "name": "mommantum",
   "version": "1.0.3",
   "private": true,
-  "author": "Kasper Fabricius Kristensen <kasper@medusajs.com> & Victor Gerbrands <victor@medusajs.com> (https://www.medusajs.com)",
-  "description": "Next.js Starter to be used with Medusa V2",
+  "description": "Mommantum Digital Agency & Performance Marketing Website",
   "keywords": [
-    "medusa-storefront"
+    "mommantum",
+    "digital-marketing",
+    "performance-marketing",
+    "agency"
   ],
   "scripts": {
     "dev": "next dev -p 8000",
