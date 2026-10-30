@@ -15,6 +15,14 @@ function sanitizeFileName(name: string) {
   return `${baseName || "blog-image"}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${extension}`
 }
 
+export async function GET() {
+  return NextResponse.json({
+    status: "online",
+    endpoint: "POST /api/blog/upload",
+    message: "Mommantum Blog Image Upload API is active. Send an HTTP POST request with multipart/form-data ('files' field) and Bearer authorization.",
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization")

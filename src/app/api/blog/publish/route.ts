@@ -22,6 +22,14 @@ const blogPayloadSchema = z.object({
   })).nullish()
 })
 
+export async function GET() {
+  return NextResponse.json({
+    status: "online",
+    endpoint: "POST /api/blog/publish",
+    message: "Mommantum Blog Publishing API is active. Send an HTTP POST request with JSON payload and Bearer authorization.",
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization")
