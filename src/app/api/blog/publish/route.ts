@@ -1,3 +1,17 @@
+/**
+ * @file route.ts
+ * @module api/blog/publish
+ * @description Automated Blog Publishing Endpoint for external automation workflows (e.g., n8n).
+ * 
+ * Capabilities:
+ * - Accepts structured JSON payloads containing blog title, HTML content, meta tags, and FAQs.
+ * - Supports optional `status`: "published" (default) or "draft".
+ * - Supports optional custom `slug` (falls back to URL-sanitized title).
+ * - Enforces Bearer token authentication via N8N_API_KEY or ADMIN_SECRET.
+ * - For published posts: updates published_at timestamp, invalidates Next.js ISR cache, and notifies Google Indexing API.
+ * - For draft posts: keeps published_at null, skips Google Indexing, and skips cache revalidation.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@lib/supabase-admin"
 import { z } from "zod"

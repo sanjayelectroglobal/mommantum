@@ -1,3 +1,16 @@
+/**
+ * @file route.ts
+ * @module api/blog/upload
+ * @description Automated Blog Image Upload Endpoint for external pipelines (e.g., n8n).
+ * 
+ * Capabilities:
+ * - Accepts multipart/form-data with binary image files in the `files` (or `file`) field.
+ * - Enforces Bearer token authentication via N8N_API_KEY or ADMIN_SECRET.
+ * - Sanitizes filenames with timestamp and entropy to prevent Supabase storage collisions.
+ * - Uploads to Supabase Storage bucket `blog-images`.
+ * - Returns public URLs formatted as `{ "files": [{ "url": "<public-url>" }] }`.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@lib/supabase-admin"
 
