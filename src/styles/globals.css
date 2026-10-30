@@ -2,6 +2,12 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+.font-epilogue { font-family: 'Epilogue', sans-serif; }
+.font-outfit { font-family: 'Outfit', sans-serif; }
+.font-mansalva { font-family: 'Mansalva', cursive; }
+.font-cormorant { font-family: 'Cormorant Garamond', serif; }
+.font-dmsans { font-family: 'DM Sans', sans-serif; }
+
 @layer utilities {
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {

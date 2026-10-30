@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
             getItem(key: string) {
               return req.cookies.get(key)?.value || null
             },
-            setItem() {},
-            removeItem() {},
+            setItem() { },
+            removeItem() { },
           }
         },
       }
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
         })
         .select("role, status")
         .single()
-        
+
       if (newProfile) {
         role = newProfile.role
         status = newProfile.status

@@ -59,6 +59,11 @@ module.exports = {
         "3xl": "2rem",
       },
       fontFamily: {
+        epilogue: ["Epilogue", "sans-serif"],
+        outfit: ["Outfit", "sans-serif"],
+        mansalva: ["Mansalva", "cursive"],
+        cormorant: ["Cormorant Garamond", "serif"],
+        dmsans: ["DM Sans", "sans-serif"],
         sans: [
           "Inter",
           "-apple-system",

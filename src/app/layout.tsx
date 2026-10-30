@@ -18,6 +18,14 @@ export default function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        {/* Google Fonts Preconnect & Stylesheet */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=Epilogue:wght@400;500;600;700;800&family=Mansalva&family=Outfit:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+
         {/* Google Tag Manager */}
         <Script
           id="gtm-script"
