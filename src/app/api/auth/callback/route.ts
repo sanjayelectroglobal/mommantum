@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { supabaseAdmin } from "@lib/supabase-admin"
+
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://zuwgqlwrkhmlmcvaqxyl.supabase.co"
+
+const SUPABASE_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2dxbHdya2htbG1jdmFxeHlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTU4MDQsImV4cCI6MjEwMDg5MTgwNH0.hPPVUAGotMfVzHbClp7v8Q496_sgRLbwo9Q6zMYNjQI"
 
 export async function GET(req: NextRequest) {
-  // Initialize supabaseAdmin early to check settings and profiles
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
   let adminPathPrefix = "admin"
   try {
     const { data: siteSetting } = await supabaseAdmin
@@ -30,8 +33,8 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         auth: {
           flowType: "pkce",
